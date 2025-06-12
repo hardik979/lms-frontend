@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import LoadingPage from "@/components/Loader";
-import { LockKeyhole, PlayIcon } from "lucide-react";
+import { BookOpenIcon, LockKeyhole, PlayIcon } from "lucide-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
+import Link from "next/link";
 
 export default function CourseClientPage() {
   const courseId = useSelectedCourseStore((s) => s.courseId);
@@ -16,6 +17,7 @@ export default function CourseClientPage() {
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>(
     {}
   );
+  const [testProgress, setTestProgress] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState("free");
   const [purchasedCourses, setPurchasedCourses] = useState<string[]>([]);
@@ -60,6 +62,21 @@ export default function CourseClientPage() {
           progressMap[entry.videoId] = entry.progress || 0;
         });
         setVideoProgress(progressMap);
+
+        // Get test progress
+        const testProgressRes = await fetch(
+          `http://localhost:5000/api/tests/course/${courseId}/progress`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const testProgressData = await testProgressRes.json();
+
+        const testProgressMap: Record<string, any> = {};
+        testProgressData.results?.forEach((result: any) => {
+          testProgressMap[result.testId.chapterIndex] = result;
+        });
+        setTestProgress(testProgressMap);
       } catch (err) {
         console.error("❌ Failed to load course or progress", err);
       } finally {
@@ -72,6 +89,7 @@ export default function CourseClientPage() {
 
   if (loading) return <LoadingPage />;
   if (!course) return <div className="p-10 text-red-600">Course not found</div>;
+
   const allVideos = course.chapters.flatMap((ch: any) => ch.videos);
   const totalVideos = allVideos.length;
 
@@ -87,9 +105,9 @@ export default function CourseClientPage() {
   return (
     <div className="max-w-full mx-auto py-5 px-4">
       {/* Top Row: Two Boxes */}
-      <div className="flex flex-col md:flex-row gap-6  mb-6">
+      <div className="flex flex-col md:flex-row gap-6 mb-6">
         <div
-          className="flex-1 bg-cyan-950  shadow-md rounded-lg p-6"
+          className="flex-1 bg-cyan-950 shadow-md rounded-lg p-6"
           style={{
             backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
             backgroundSize: "20px 20px",
@@ -127,8 +145,7 @@ export default function CourseClientPage() {
         </div>
       </div>
 
-      {/* Bottom Row: Three Boxes */}
-
+      {/* Course Chapters */}
       {course.chapters.map((chapter: any, ci: number) => {
         const totalVideos = chapter.videos.length;
         const totalProgress = chapter.videos.reduce((sum: number, v: any) => {
@@ -136,6 +153,8 @@ export default function CourseClientPage() {
         }, 0);
         const averageProgress =
           totalVideos > 0 ? Math.round(totalProgress / totalVideos) : 0;
+
+        const chapterTestResult = testProgress[ci];
 
         return (
           <div
@@ -212,16 +231,35 @@ export default function CourseClientPage() {
                 );
               })}
             </div>
+
+            {/* Test Section */}
             {hasFullAccess && (
-              <div
-                className="mt-4 p-4 rounded-md flex justify-center items-center bg-cyan-50 text-black"
-                style={{
-                  backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-                  backgroundSize: "20px 20px",
-                }}
-              >
-                <h1 className="text-lg font-semibold">Start The Test</h1>
-              </div>
+              <Link href={`/test/${courseId}/${ci}`}>
+                <div
+                  className="mt-4 p-4 rounded-md flex justify-center items-center bg-cyan-50 text-black hover:bg-cyan-100 transition-colors cursor-pointer"
+                  style={{
+                    backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
+                    backgroundSize: "20px 20px",
+                  }}
+                >
+                  <BookOpenIcon className="w-5 h-5 mr-2 " />
+                  <h1 className="text-lg font-semibold">
+                    {chapterTestResult ? (
+                      <span className="flex items-center">
+                        Chapter Test Completed
+                        <span className="ml-2 text-green-600">
+                          ({chapterTestResult.percentage}%)
+                        </span>
+                        <span className="ml-2 text-sm text-gray-600">
+                          - Retake
+                        </span>
+                      </span>
+                    ) : (
+                      "Start Chapter Test"
+                    )}
+                  </h1>
+                </div>
+              </Link>
             )}
 
             {!hasFullAccess && (
@@ -233,9 +271,9 @@ export default function CourseClientPage() {
                 }}
               >
                 <h1 className="text-lg font-semibold">
-                  Start The Test{" "}
+                  Start Chapter Test{" "}
                   <span>
-                    <LockKeyhole className="ml-2 mb-1  w-4 h-4 inline-block" />
+                    <LockKeyhole className="ml-2 mb-1 w-4 h-4 inline-block" />
                   </span>
                 </h1>
               </div>
