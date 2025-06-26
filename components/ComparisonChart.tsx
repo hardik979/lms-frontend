@@ -36,13 +36,7 @@ const data = [
 
 export default function ComparisonChart() {
   return (
-    <section
-      className="bg-cyan-950 text-white mt-6 rounded-xl py-16 px-6 sm:px-12"
-      style={{
-        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-        backgroundSize: "20px 20px",
-      }}
-    >
+    <section className="bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900  text-white mt-6 rounded-xl py-16 px-6 sm:px-12">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
           Salary Comparison (IT Jobs Factory vs Market)

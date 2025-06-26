@@ -40,13 +40,7 @@ const CurriculumSection = () => {
   ];
 
   return (
-    <section
-      className="bg-cyan-950 p-6 md:p-10 rounded-xl w-full shadow-md my-4 text-white"
-      style={{
-        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-        backgroundSize: "20px 20px",
-      }}
-    >
+    <section className="bg-cyan-900/30  backdrop-blur-sm border border-cyan-700/50 p-6 md:p-10 rounded-xl w-full shadow-md my-4 text-white">
       <h2 className="text-xl md:text-2xl font-semibold mb-6">
         Curriculum re-engineered for the post ChatGPT era with advanced
         specialisations to build deeper expertise

@@ -1,4 +1,3 @@
-// app/test/[courseId]/[chapterIndex]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,6 +14,7 @@ import {
   Trophy,
   RotateCcw,
   Home,
+  History,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import LoadingPage from "@/components/Loader";
@@ -38,6 +38,14 @@ interface AnswerFeedback {
   selectedAnswer: string;
 }
 
+interface PreviousResult {
+  attempt: number;
+  score: number;
+  percentage: number;
+  completedAt: string;
+  timeSpent: number;
+}
+
 interface TestData {
   test: {
     _id: string;
@@ -46,6 +54,9 @@ interface TestData {
   };
   questions: Question[];
   totalQuestions: number;
+  attemptNumber: number;
+  previousResults: PreviousResult[];
+  canRetake: boolean;
 }
 
 export default function TestPage() {
@@ -71,24 +82,33 @@ export default function TestPage() {
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [showPreviousResults, setShowPreviousResults] = useState(false);
 
   useEffect(() => {
     fetchTest();
-    setStartTime(new Date());
+  }, [courseId, chapterIndex]);
 
-    // Timer
+  useEffect(() => {
+    if (testData && !testCompleted) {
+      setStartTime(new Date());
+    }
+  }, [testData, testCompleted]);
+  useEffect(() => {
+    if (!startTime) return;
+
     const timer = setInterval(() => {
-      setCurrentTime((Date.now() - startTime.getTime()) / 1000);
+      setCurrentTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [courseId, chapterIndex]);
-
+  }, [startTime]);
   const fetchTest = async () => {
     try {
+      setLoading(true);
       const token = await getToken();
       if (!token) return;
 
+      // First, get the test info
       const response = await fetch(
         `http://localhost:5000/api/tests/course/${courseId}/chapter/${chapterIndex}`,
         {
@@ -106,7 +126,7 @@ export default function TestPage() {
 
       const data = await response.json();
 
-      // Start the test
+      // Start the test (this will always work now)
       const startResponse = await fetch(
         `http://localhost:5000/api/tests/${data.test._id}/start`,
         {
@@ -122,6 +142,11 @@ export default function TestPage() {
 
       const startData = await startResponse.json();
       setTestData(startData);
+
+      // Show previous results if any
+      if (startData.previousResults && startData.previousResults.length > 0) {
+        toast.info(`This is attempt #${startData.attemptNumber}`);
+      }
     } catch (error) {
       console.error("Error fetching test:", error);
       toast.error("Failed to load test");
@@ -212,7 +237,7 @@ export default function TestPage() {
       const endTime = new Date();
       const timeSpent = Math.round(
         (endTime.getTime() - startTime.getTime()) / 1000
-      ); // in seconds
+      );
 
       const answers = Object.entries(userAnswers).map(
         ([questionId, selectedAnswer]) => ({
@@ -238,10 +263,6 @@ export default function TestPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        if (response.status === 409) {
-          toast.info("Test already completed");
-          return;
-        }
         throw new Error(errorData.error || "Failed to complete test");
       }
 
@@ -249,7 +270,7 @@ export default function TestPage() {
       setFinalResult(result.result);
       setTestCompleted(true);
 
-      toast.success("Test completed successfully!");
+      toast.success(`Test completed! Attempt #${result.result.attempt}`);
     } catch (error) {
       console.error("Error completing test:", error);
       toast.error("Failed to complete test");
@@ -262,8 +283,8 @@ export default function TestPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const retakeTest = () => {
-    // Reset all state
+  const startNewAttempt = () => {
+    // Reset all state for new attempt
     setCurrentQuestionIndex(0);
     setSelectedAnswer("");
     setAnsweredQuestions(new Set());
@@ -272,9 +293,22 @@ export default function TestPage() {
     setShowFeedback(false);
     setTestCompleted(false);
     setFinalResult(null);
-    setStartTime(new Date());
     setCorrectAnswers(0);
     setCurrentTime(0);
+    setShowPreviousResults(false);
+
+    // Re-fetch test data to get updated attempt number
+    fetchTest();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (loading) return <LoadingPage />;
@@ -290,10 +324,10 @@ export default function TestPage() {
       >
         <div className="text-center text-white">
           <Brain className="w-16 h-16 mx-auto mb-4 text-cyan-400" />
-          <h2 className="text-2xl font-bold mb-2">
-            You have already done the Test
-          </h2>
-          <p className="text-cyan-200 mb-4">Start The next Chapter now !!</p>
+          <h2 className="text-2xl font-bold mb-2">Test Not Available</h2>
+          <p className="text-cyan-200 mb-4">
+            There seems to be an issue loading the test.
+          </p>
           <button
             onClick={() => router.back()}
             className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
@@ -317,6 +351,11 @@ export default function TestPage() {
           <h2 className="text-3xl font-bold text-gray-800 mb-2">
             Test Completed!
           </h2>
+          <div className="mb-2">
+            <span className="text-sm text-gray-500">
+              Attempt #{finalResult.attempt}
+            </span>
+          </div>
           <div className="mb-6">
             <div className="text-4xl font-bold text-cyan-600 mb-2">
               {finalResult.percentage}%
@@ -329,14 +368,57 @@ export default function TestPage() {
             </p>
           </div>
 
+          {/* Previous Results Summary */}
+          {testData.previousResults.length > 0 && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <button
+                onClick={() => setShowPreviousResults(!showPreviousResults)}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mx-auto"
+              >
+                <History className="w-4 h-4" />
+                {showPreviousResults ? "Hide" : "Show"} Previous Attempts (
+                {testData.previousResults.length})
+              </button>
+
+              {showPreviousResults && (
+                <div className="mt-3 space-y-2 max-h-32 overflow-y-auto">
+                  {testData.previousResults.map((result) => (
+                    <div
+                      key={result.attempt}
+                      className="text-xs text-gray-600 flex justify-between"
+                    >
+                      <span>Attempt #{result.attempt}</span>
+                      <span>
+                        {result.percentage}% ({result.score}/
+                        {testData.totalQuestions})
+                      </span>
+                      <span>{formatDate(result.completedAt)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-3">
-            <button
-              onClick={retakeTest}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Retake Test
-            </button>
+            {testData.attemptNumber < 3 ? (
+              <button
+                onClick={startNewAttempt}
+                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Take Another Attempt
+              </button>
+            ) : (
+              <button
+                disabled
+                className="w-full bg-gray-400 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-not-allowed"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Attempt Limit Reached
+              </button>
+            )}
+
             <button
               onClick={() =>
                 router.push(`/student-dashboard/course?id=${courseId}`)
@@ -354,7 +436,6 @@ export default function TestPage() {
 
   const currentQuestion = testData.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / testData.totalQuestions) * 100;
-  const isAnswered = answeredQuestions.has(currentQuestionIndex);
   const canGoNext =
     showFeedback && currentQuestionIndex < testData.questions.length - 1;
   const canComplete =
@@ -368,7 +449,7 @@ export default function TestPage() {
         backgroundSize: "20px 20px",
       }}
     >
-      <nav className="sticky top-0 z-50 bg-cyan-950 font-bold text-xl border-b border-white text-white font-sans  md:px-10 h-14 flex items-center">
+      <nav className="sticky top-0 z-50 bg-cyan-950 font-bold text-xl border-b border-white text-white font-sans md:px-10 h-14 flex items-center">
         <span className="text-xl font-bold text-yellow-400 mr-1.5">IT </span>
         JOBS FACTORY
       </nav>
@@ -385,17 +466,24 @@ export default function TestPage() {
                 {testData.test.title}
               </h1>
               <p className="text-gray-600">{testData.test.description}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-cyan-600">
-                <Clock className="w-5 h-5" />
-                <span className="font-medium">{formatTime(currentTime)}</span>
+              <div className="mt-2 flex items-center gap-4 text-sm">
+                <span className="text-cyan-600 font-medium">
+                  Attempt #{testData.attemptNumber}
+                </span>
+                {testData.previousResults.length > 0 && (
+                  <span className="text-gray-500">
+                    Previous attempts: {testData.previousResults.length}
+                  </span>
+                )}
               </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-500">Progress</div>
-                <div className="font-bold text-cyan-600">
-                  {currentQuestionIndex + 1} / {testData.totalQuestions}
-                </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-2 text-gray-600 mb-2">
+                <Clock className="w-4 h-4" />
+                <span className="font-mono">{formatTime(currentTime)}</span>
+              </div>
+              <div className="text-sm text-gray-500">
+                Question {currentQuestionIndex + 1} of {testData.totalQuestions}
               </div>
             </div>
           </div>
@@ -406,7 +494,7 @@ export default function TestPage() {
               className="bg-cyan-600 h-2 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
             />
           </div>
         </motion.div>
@@ -415,233 +503,228 @@ export default function TestPage() {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestionIndex}
-            initial={{ x: 20, opacity: 0 }}
+            initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            className="bg-white rounded-lg p-8 shadow-lg"
+            exit={{ x: -50, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-lg p-6 mb-6 shadow-lg"
           >
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Question {currentQuestionIndex + 1}
-              </h2>
-              <p className="text-lg text-gray-700 leading-relaxed">
                 {currentQuestion.question}
-              </p>
-            </div>
+              </h2>
 
-            {/* Options */}
-            <div className="space-y-3 mb-6">
-              {Object.entries(currentQuestion.options).map(([key, value]) => (
-                <motion.button
-                  key={key}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => !showFeedback && setSelectedAnswer(key)}
-                  disabled={showFeedback}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                    selectedAnswer === key
-                      ? "border-cyan-600 bg-cyan-50"
-                      : "border-gray-200 hover:border-cyan-300"
-                  } ${
-                    showFeedback
-                      ? feedback?.correctAnswer === key
-                        ? "border-green-500 bg-green-50"
-                        : selectedAnswer === key && !feedback?.isCorrect
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 bg-gray-50"
-                      : ""
-                  } ${showFeedback ? "cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-cyan-600 bg-cyan-100 w-8 h-8 rounded-full flex items-center justify-center">
-                      {key}
-                    </span>
-                    <span className="text-gray-800">{value}</span>
-                    {showFeedback && feedback?.correctAnswer === key && (
-                      <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
-                    )}
-                    {showFeedback &&
-                      selectedAnswer === key &&
-                      !feedback?.isCorrect && (
-                        <XCircle className="w-5 h-5 text-red-500 ml-auto" />
+              <div className="space-y-3">
+                {Object.entries(currentQuestion.options).map(([key, value]) => (
+                  <motion.label
+                    key={key}
+                    className={`
+                      block p-4 rounded-lg border-2 cursor-pointer transition-all
+                      ${
+                        selectedAnswer === key
+                          ? "border-cyan-500 bg-cyan-50"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }
+                      ${
+                        showFeedback && feedback
+                          ? feedback.correctAnswer === key
+                            ? "border-green-500 bg-green-50"
+                            : feedback.selectedAnswer === key &&
+                              !feedback.isCorrect
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 bg-gray-50"
+                          : ""
+                      }
+                    `}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <input
+                      type="radio"
+                      name="answer"
+                      value={key}
+                      checked={selectedAnswer === key}
+                      onChange={(e) => setSelectedAnswer(e.target.value)}
+                      disabled={showFeedback}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center">
+                      <span className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center mr-3 text-sm font-medium">
+                        {key}
+                      </span>
+                      <span className="text-gray-700">{value}</span>
+                      {showFeedback && feedback && (
+                        <div className="ml-auto">
+                          {feedback.correctAnswer === key && (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          )}
+                          {feedback.selectedAnswer === key &&
+                            !feedback.isCorrect && (
+                              <XCircle className="w-5 h-5 text-red-500" />
+                            )}
+                        </div>
                       )}
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Feedback */}
-            <AnimatePresence>
-              {showFeedback && feedback && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg mb-6 ${
-                    feedback.isCorrect
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-red-50 border border-red-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    {feedback.isCorrect ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-600" />
-                    )}
-                    <span
-                      className={`font-semibold ${
-                        feedback.isCorrect ? "text-green-800" : "text-red-800"
-                      }`}
-                    >
-                      {feedback.isCorrect ? "Correct!" : "Incorrect"}
-                    </span>
-                  </div>
-                  {feedback.explanation && (
-                    <p className="text-gray-700">{feedback.explanation}</p>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center">
-              <button
-                onClick={previousQuestion}
-                disabled={currentQuestionIndex === 0}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Previous
-              </button>
-
-              <div className="flex gap-3">
-                {!showFeedback && selectedAnswer && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={submitAnswer}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-colors"
-                  >
-                    Submit Answer
-                  </motion.button>
-                )}
-
-                {canGoNext && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={nextQuestion}
-                    className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-colors"
-                  >
-                    Next Question
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.button>
-                )}
-
-                {canComplete && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={completeTest}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
-                  >
-                    <Trophy className="w-4 h-4" />
-                    Complete Test
-                  </motion.button>
-                )}
+                    </div>
+                  </motion.label>
+                ))}
               </div>
             </div>
+
+            {/* Submit Button */}
+            {!showFeedback && (
+              <div className="flex justify-center">
+                <button
+                  onClick={submitAnswer}
+                  disabled={!selectedAnswer}
+                  className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-8 py-3 rounded-lg transition-colors font-medium"
+                >
+                  Submit Answer
+                </button>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 
+        {/* Feedback Section */}
+        <AnimatePresence>
+          {showFeedback && feedback && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              className={`
+                rounded-lg p-6 mb-6 shadow-lg
+                ${
+                  feedback.isCorrect
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
+                }
+              `}
+            >
+              <div className="flex items-center mb-4">
+                {feedback.isCorrect ? (
+                  <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-600 mr-2" />
+                )}
+                <h3
+                  className={`text-lg font-semibold ${
+                    feedback.isCorrect ? "text-green-800" : "text-red-800"
+                  }`}
+                >
+                  {feedback.isCorrect ? "Correct!" : "Incorrect"}
+                </h3>
+              </div>
+
+              {!feedback.isCorrect && (
+                <p className="text-red-700 mb-2">
+                  The correct answer is:{" "}
+                  <strong>{feedback.correctAnswer}</strong>
+                </p>
+              )}
+
+              <p className="text-gray-700 mb-4">{feedback.explanation}</p>
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={previousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Previous
+                </button>
+
+                <div className="flex gap-3">
+                  {canComplete ? (
+                    <button
+                      onClick={completeTest}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      Complete Test
+                    </button>
+                  ) : (
+                    <button
+                      onClick={nextQuestion}
+                      disabled={!canGoNext}
+                      className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-colors font-medium disabled:opacity-50"
+                    >
+                      Next
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Question Navigation */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mt-6 bg-white rounded-lg p-4 shadow-lg"
-        >
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            Question Navigation
+        <div className="bg-white rounded-lg p-6 shadow-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Question Overview
           </h3>
           <div className="grid grid-cols-10 gap-2">
             {testData.questions.map((_, index) => (
-              <motion.button
+              <button
                 key={index}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={() => {
-                  setCurrentQuestionIndex(index);
-                  setSelectedAnswer("");
-                  setShowFeedback(false);
-                  setFeedback(null);
+                  if (index <= Math.max(...Array.from(answeredQuestions))) {
+                    setCurrentQuestionIndex(index);
+                    setSelectedAnswer(
+                      userAnswers[testData.questions[index]._id] || ""
+                    );
+                    setShowFeedback(false);
+                    setFeedback(null);
+                  }
                 }}
-                className={`w-10 h-10 rounded-full font-semibold transition-all ${
-                  index === currentQuestionIndex
-                    ? "bg-cyan-600 text-white"
-                    : answeredQuestions.has(index)
-                    ? "bg-green-100 text-green-700 border-2 border-green-300"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`
+                  w-10 h-10 rounded-lg text-sm font-medium transition-colors
+                  ${
+                    index === currentQuestionIndex
+                      ? "bg-cyan-600 text-white"
+                      : answeredQuestions.has(index)
+                      ? "bg-green-100 text-green-800 border-green-300"
+                      : "bg-gray-100 text-gray-600 border-gray-300"
+                  }
+                  ${
+                    index <=
+                    Math.max(
+                      ...Array.from(answeredQuestions),
+                      currentQuestionIndex
+                    )
+                      ? "cursor-pointer hover:opacity-80"
+                      : "cursor-not-allowed opacity-50"
+                  }
+                `}
+                disabled={
+                  index >
+                  Math.max(
+                    ...Array.from(answeredQuestions),
+                    currentQuestionIndex
+                  )
+                }
               >
                 {index + 1}
-              </motion.button>
+              </button>
             ))}
           </div>
-          <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex justify-center gap-6 mt-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-cyan-600 rounded-full"></div>
+              <div className="w-4 h-4 bg-cyan-600 rounded"></div>
               <span>Current</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border-2 border-green-300 rounded-full"></div>
+              <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
               <span>Answered</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-100 rounded-full"></div>
+              <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded"></div>
               <span>Not Answered</span>
             </div>
           </div>
-        </motion.div>
-
-        {/* Stats Card */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mt-6 bg-white rounded-lg p-6 shadow-lg"
-        >
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Test Statistics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-cyan-50 rounded-lg">
-              <div className="text-2xl font-bold text-cyan-600">
-                {testData.totalQuestions}
-              </div>
-              <div className="text-sm text-gray-600">Total Questions</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {answeredQuestions.size}
-              </div>
-              <div className="text-sm text-gray-600">Answered</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {correctAnswers}
-              </div>
-              <div className="text-sm text-gray-600">Correct</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {answeredQuestions.size > 0
-                  ? Math.round((correctAnswers / answeredQuestions.size) * 100)
-                  : 0}
-                %
-              </div>
-              <div className="text-sm text-gray-600">Accuracy</div>
-            </div>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

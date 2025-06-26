@@ -1,14 +1,7 @@
 "use client";
-
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Plus, Trash2, Upload, Play, Video, TestTube } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
-import { toast } from "react-toastify";
-
 type VideoForm = {
   title: string;
   file: File | null;
@@ -35,8 +28,12 @@ type ChapterForm = {
 };
 
 export default function CreateCoursePage() {
+  const { getToken } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [chapters, setChapters] = useState<ChapterForm[]>([
     {
@@ -48,7 +45,14 @@ export default function CreateCoursePage() {
     },
   ]);
   const [status, setStatus] = useState("");
-  const { getToken } = useAuth();
+  const [notifications, setNotifications] = useState<string[]>([]);
+
+  const showNotification = (message: string) => {
+    setNotifications((prev) => [...prev, message]);
+    setTimeout(() => {
+      setNotifications((prev) => prev.slice(1));
+    }, 5000);
+  };
 
   const handleAddChapter = () => {
     setChapters([
@@ -174,11 +178,13 @@ export default function CreateCoursePage() {
 
   const handleSubmit = async () => {
     if (!title || !description || !thumbnail) {
-      toast.error("Please fill course title, description, and thumbnail.");
+      showNotification("Please fill course title, description, and thumbnail.");
       return;
     }
 
     setStatus("Uploading course...");
+    setIsUploading(true);
+    setUploadProgress(10);
 
     const formData = new FormData();
     formData.append("title", title);
@@ -216,324 +222,463 @@ export default function CreateCoursePage() {
         }
       );
 
+      setUploadProgress(60);
+
       const result = await res.json();
       if (res.ok) {
         setStatus("Creating tests...");
-
-        // Create tests after course is created successfully
         await createTestsForCourse(result.course._id);
+        setUploadProgress(100);
 
-        toast.success("✅ Course and tests created successfully!");
-        setStatus("");
+        showNotification("✅ Course and tests created successfully!");
+        resetForm();
       } else {
-        toast.error("❌ Failed: " + result.error);
-        setStatus("");
+        showNotification("❌ Failed: " + result.error);
       }
     } catch (err) {
-      toast.error("❌ Server error. Please try again later.");
+      showNotification("❌ Server error. Please try again later.");
+    } finally {
       setStatus("");
+      setIsUploading(false);
     }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setThumbnail(null);
+    setChapters([
+      {
+        title: "",
+        videos: [{ title: "", file: null }],
+        testQuestions: [],
+        testTitle: "",
+        testDescription: "",
+      },
+    ]);
+    setUploadProgress(0);
+  };
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6 text-white">
-      <h1 className="text-2xl font-bold text-cyan-300">Create New Course</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900  rounded-2xl">
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification, index) => (
+          <div
+            key={index}
+            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4 text-white shadow-2xl animate-in slide-in-from-right duration-500"
+          >
+            {notification}
+          </div>
+        ))}
+      </div>
 
-      <Card className="p-6 space-y-4 bg-cyan-800 border-cyan-500">
-        <div>
-          <Label className="text-white">Course Title</Label>
-          <Input
-            className="text-white"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+      <div className="container mx-auto px-6 py-12 max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-100 via-cyan-300 to-cyan-400 bg-clip-text text-transparent">
+              Create New Course
+            </h1>
+          </div>
+          <p className="text-white/70 text-lg max-w-2xl mx-auto">
+            In This Section you can add a new course and create tests for it for
+            students.
+          </p>
         </div>
-        <div>
-          <Label className="text-white">Course Description</Label>
-          <Textarea
-            className="text-white"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label className="text-white">Course Thumbnail</Label>
-          <Input
-            className="text-white"
-            type="file"
-            accept="image/*"
-            onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
-          />
-        </div>
-      </Card>
 
-      {chapters.map((chapter, ci) => (
-        <Card key={ci} className="p-6 bg-cyan-800 border-cyan-500 space-y-6">
-          <div className="flex justify-between items-center">
-            <Label className="text-white text-lg font-semibold">
-              Chapter {ci + 1}
-            </Label>
-            {chapters.length > 1 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleRemoveChapter(ci)}
-              >
-                Remove Chapter
-              </Button>
-            )}
+        {/* Course Details */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 mb-8 shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-2 h-8 bg-gradient-to-b from-cyan-500 to-cyan-300 rounded-full"></div>
+            <h2 className="text-2xl font-semibold text-white">
+              Course Information
+            </h2>
           </div>
 
-          <div>
-            <Label className="text-white">Chapter Title</Label>
-            <Input
-              className="text-white"
-              value={chapter.title}
-              onChange={(e) => {
-                const updated = [...chapters];
-                updated[ci].title = e.target.value;
-                setChapters(updated);
-              }}
-            />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-3">
+                  Course Title
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter an engaging course title..."
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+              </div>
 
-          {/* Videos Section */}
-          <div className="space-y-4">
-            <Label className="text-white text-md font-medium">Videos</Label>
-            {chapter.videos.map((video, vi) => (
-              <div
-                key={vi}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-cyan-700 rounded"
-              >
-                <div>
-                  <Label className="text-white">Video {vi + 1} Title</Label>
-                  <Input
-                    className="text-white"
-                    value={video.title}
-                    onChange={(e) => {
-                      const updated = [...chapters];
-                      updated[ci].videos[vi].title = e.target.value;
-                      setChapters(updated);
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label className="text-white">Video File</Label>
-                  <Input
-                    className="text-white"
+              <div>
+                <label className="block text-white/80 text-sm font-medium mb-3">
+                  Course Thumbnail
+                </label>
+                <div className="relative">
+                  <input
                     type="file"
-                    accept="video/*"
-                    onChange={(e) => {
-                      const updated = [...chapters];
-                      updated[ci].videos[vi].file = e.target.files?.[0] || null;
-                      setChapters(updated);
-                    }}
+                    accept="image/*"
+                    onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
+                  <div className="flex items-center gap-3 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white/70 hover:bg-white/20 transition-all cursor-pointer">
+                    <Upload className="w-5 h-5" />
+                    <span>
+                      {thumbnail ? thumbnail.name : "Choose thumbnail image"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-
-            <Button
-              variant="outline"
-              className="text-cyan-900 border-cyan-700"
-              onClick={() => handleAddVideo(ci)}
-            >
-              + Add Video
-            </Button>
-          </div>
-
-          {/* Test Section */}
-          <div className="space-y-4 border-t border-cyan-600 pt-4">
-            <Label className="text-white text-md font-medium">
-              Chapter Test (Optional)
-            </Label>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white">Test Title</Label>
-                <Input
-                  className="text-white"
-                  placeholder={`${chapter.title || "Chapter"} Test`}
-                  value={chapter.testTitle}
-                  onChange={(e) => {
-                    const updated = [...chapters];
-                    updated[ci].testTitle = e.target.value;
-                    setChapters(updated);
-                  }}
-                />
-              </div>
-              <div>
-                <Label className="text-white">Test Description</Label>
-                <Input
-                  className="text-white"
-                  placeholder="Brief description of the test"
-                  value={chapter.testDescription}
-                  onChange={(e) => {
-                    const updated = [...chapters];
-                    updated[ci].testDescription = e.target.value;
-                    setChapters(updated);
-                  }}
-                />
               </div>
             </div>
 
-            {/* Test Questions */}
-            {chapter.testQuestions.map((question, qi) => (
-              <Card
-                key={qi}
-                className="p-4 bg-cyan-700 border-cyan-600 space-y-3"
-              >
-                <div className="flex justify-between items-center">
-                  <Label className="text-white font-medium">
-                    Question {qi + 1}
-                  </Label>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveTestQuestion(ci, qi)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-
-                <div>
-                  <Label className="text-white">Question</Label>
-                  <Textarea
-                    className="text-white"
-                    placeholder="Enter your question here..."
-                    value={question.question}
-                    onChange={(e) =>
-                      handleTestQuestionChange(
-                        ci,
-                        qi,
-                        "question",
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-white">Option A</Label>
-                    <Input
-                      className="text-white"
-                      value={question.options.A}
-                      onChange={(e) =>
-                        handleTestQuestionChange(ci, qi, "options", {
-                          ...question.options,
-                          A: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white">Option B</Label>
-                    <Input
-                      className="text-white"
-                      value={question.options.B}
-                      onChange={(e) =>
-                        handleTestQuestionChange(ci, qi, "options", {
-                          ...question.options,
-                          B: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white">Option C</Label>
-                    <Input
-                      className="text-white"
-                      value={question.options.C}
-                      onChange={(e) =>
-                        handleTestQuestionChange(ci, qi, "options", {
-                          ...question.options,
-                          C: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-white">Option D</Label>
-                    <Input
-                      className="text-white"
-                      value={question.options.D}
-                      onChange={(e) =>
-                        handleTestQuestionChange(ci, qi, "options", {
-                          ...question.options,
-                          D: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-white">Correct Answer</Label>
-                    <select
-                      className="w-full p-2 rounded bg-cyan-600 text-white border border-cyan-500"
-                      value={question.correctAnswer}
-                      onChange={(e) =>
-                        handleTestQuestionChange(
-                          ci,
-                          qi,
-                          "correctAnswer",
-                          e.target.value as "A" | "B" | "C" | "D"
-                        )
-                      }
-                    >
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                      <option value="D">D</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label className="text-white">Explanation (Optional)</Label>
-                    <Input
-                      className="text-white"
-                      placeholder="Why is this the correct answer?"
-                      value={question.explanation}
-                      onChange={(e) =>
-                        handleTestQuestionChange(
-                          ci,
-                          qi,
-                          "explanation",
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-              </Card>
-            ))}
-
-            <Button
-              variant="outline"
-              className="text-cyan-900 border-cyan-700"
-              onClick={() => handleAddTestQuestion(ci)}
-            >
-              + Add Test Question
-            </Button>
+            <div>
+              <label className="block text-white/80 text-sm font-medium mb-3">
+                Course Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe what students will learn in this course..."
+                rows={6}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all resize-none"
+              />
+            </div>
           </div>
-        </Card>
-      ))}
+        </div>
 
-      <div className="flex gap-4">
-        <Button
-          variant="outline"
-          className="border-cyan-700 text-cyan-900"
-          onClick={handleAddChapter}
-        >
-          + Add Chapter
-        </Button>
-        <Button onClick={handleSubmit} disabled={!!status}>
-          {status || "Create Course"}
-        </Button>
+        {/* Chapters */}
+        <div className="space-y-8">
+          {chapters.map((chapter, ci) => (
+            <div
+              key={ci}
+              className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl"
+            >
+              {/* Chapter Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl text-white font-bold">
+                    {ci + 1}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">
+                      Chapter {ci + 1}
+                    </h3>
+                    <p className="text-white/60">
+                      Videos, content, and assessments
+                    </p>
+                  </div>
+                </div>
+                {chapters.length > 1 && (
+                  <button
+                    onClick={() => handleRemoveChapter(ci)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-300 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* Chapter Title */}
+              <div className="mb-8">
+                <label className="block text-white/80 text-sm font-medium mb-3">
+                  Chapter Title
+                </label>
+                <input
+                  type="text"
+                  value={chapter.title}
+                  onChange={(e) => {
+                    const updated = [...chapters];
+                    updated[ci].title = e.target.value;
+                    setChapters(updated);
+                  }}
+                  placeholder="Enter chapter title..."
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              {/* Videos Section */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Video className="w-5 h-5 text-cyan-400" />
+                  <h4 className="text-lg font-medium text-white">Videos</h4>
+                </div>
+
+                <div className="space-y-4">
+                  {chapter.videos.map((video, vi) => (
+                    <div
+                      key={vi}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-white/5 border border-white/10 rounded-2xl"
+                    >
+                      <div>
+                        <label className="block text-white/80 text-sm font-medium mb-2">
+                          Video {vi + 1} Title
+                        </label>
+                        <input
+                          type="text"
+                          value={video.title}
+                          onChange={(e) => {
+                            const updated = [...chapters];
+                            updated[ci].videos[vi].title = e.target.value;
+                            setChapters(updated);
+                          }}
+                          placeholder="Enter video title..."
+                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white/80 text-sm font-medium mb-2">
+                          Video File
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={(e) => {
+                              const updated = [...chapters];
+                              updated[ci].videos[vi].file =
+                                e.target.files?.[0] || null;
+                              setChapters(updated);
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <div className="flex items-center gap-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white/70 hover:bg-white/20 transition-all cursor-pointer">
+                            <Play className="w-4 h-4" />
+                            <span className="text-sm">
+                              {video.file
+                                ? video.file.name
+                                : "Choose video file"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handleAddVideo(ci)}
+                  className="flex items-center gap-2 px-4 py-2 mt-4 bg-cyan-500/20 hover:bg-cyan-500/30 border border-blue-500/30 rounded-xl text-blue-300 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Video
+                </button>
+              </div>
+
+              {/* Test Section */}
+              <div className="border-t border-white/10 pt-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <TestTube className="w-5 h-5 text-cyan-400" />
+                  <h4 className="text-lg font-medium text-white">
+                    Chapter Assessment
+                  </h4>
+                  <span className="text-white/50 text-sm">(Optional)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-white/80 text-sm font-medium mb-2">
+                      Test Title
+                    </label>
+                    <input
+                      type="text"
+                      value={chapter.testTitle}
+                      onChange={(e) => {
+                        const updated = [...chapters];
+                        updated[ci].testTitle = e.target.value;
+                        setChapters(updated);
+                      }}
+                      placeholder={`${chapter.title || "Chapter"} Assessment`}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/80 text-sm font-medium mb-2">
+                      Test Description
+                    </label>
+                    <input
+                      type="text"
+                      value={chapter.testDescription}
+                      onChange={(e) => {
+                        const updated = [...chapters];
+                        updated[ci].testDescription = e.target.value;
+                        setChapters(updated);
+                      }}
+                      placeholder="Brief description of the assessment"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Test Questions */}
+                <div className="space-y-6">
+                  {chapter.testQuestions.map((question, qi) => (
+                    <div
+                      key={qi}
+                      className="bg-white/5 border border-white/10 rounded-2xl p-6"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-8 h-8 bg-cyan-500/30 rounded-lg text-cyan-300 font-medium text-sm">
+                            {qi + 1}
+                          </div>
+                          <span className="text-white font-medium">
+                            Question {qi + 1}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveTestQuestion(ci, qi)}
+                          className="flex items-center gap-1 px-3 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-300 text-sm transition-all"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Remove
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-white/80 text-sm font-medium mb-2">
+                            Question
+                          </label>
+                          <textarea
+                            value={question.question}
+                            onChange={(e) =>
+                              handleTestQuestionChange(
+                                ci,
+                                qi,
+                                "question",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter your question here..."
+                            rows={3}
+                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all resize-none"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {(["A", "B", "C", "D"] as const).map((option) => (
+                            <div key={option}>
+                              <label className="block text-white/80 text-sm font-medium mb-2">
+                                Option {option}
+                              </label>
+                              <input
+                                type="text"
+                                value={question.options[option]}
+                                onChange={(e) =>
+                                  handleTestQuestionChange(ci, qi, "options", {
+                                    ...question.options,
+                                    [option]: e.target.value,
+                                  })
+                                }
+                                placeholder={`Enter option ${option}`}
+                                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-2">
+                              Correct Answer
+                            </label>
+                            <select
+                              value={question.correctAnswer}
+                              onChange={(e) =>
+                                handleTestQuestionChange(
+                                  ci,
+                                  qi,
+                                  "correctAnswer",
+                                  e.target.value as "A" | "B" | "C" | "D"
+                                )
+                              }
+                              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                            >
+                              <option value="A">A</option>
+                              <option value="B">B</option>
+                              <option value="C">C</option>
+                              <option value="D">D</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-2">
+                              Explanation
+                            </label>
+                            <input
+                              type="text"
+                              value={question.explanation}
+                              onChange={(e) =>
+                                handleTestQuestionChange(
+                                  ci,
+                                  qi,
+                                  "explanation",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Why is this the correct answer?"
+                              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handleAddTestQuestion(ci)}
+                  className="flex items-center gap-2 px-4 py-2 mt-4 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-xl text-cyan-300 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Question
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Upload Progress */}
+        {isUploading && (
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mt-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-white font-medium">
+                {status || "Uploading..."}
+              </span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-cyan-400 to-cyan-500 h-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-white/60 mt-2 text-sm">
+              {uploadProgress}% completed
+            </p>
+          </div>
+        )}
+
+        {/* Final Buttons */}
+        <div className="flex justify-between items-center mt-12">
+          <button
+            onClick={handleAddChapter}
+            className="flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20"
+          >
+            <Plus className="w-4 h-4" />
+            Add Chapter
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!!status || isUploading}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 py-3 rounded-xl font-semibold shadow-xl transition-all disabled:opacity-50"
+          >
+            {status ? "Processing..." : "Create Course"}
+          </button>
+        </div>
       </div>
-
-      {status && <p className="text-cyan-400">{status}</p>}
     </div>
   );
 }

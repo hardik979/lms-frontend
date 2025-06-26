@@ -67,16 +67,9 @@ export default function JobBoardPage() {
   }, [selectedJobType, selectedDomain]);
 
   return (
-    <div className="bg-cyan-950 min-h-screen flex flex-col md:flex-row text-white">
+    <div className=" bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 min-h-screen flex flex-col md:flex-row text-white">
       {/* Sidebar */}
-      <aside
-        className="md:w-72 w-full p-6 bg-cyan-900 border-r border-cyan-800"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "20px 20px",
-        }}
-      >
+      <aside className="md:w-72 w-full p-6  bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-cyan-800">
         <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
         {/* Location */}
@@ -159,12 +152,7 @@ export default function JobBoardPage() {
             {jobs.map((job) => (
               <div
                 key={job.job_id}
-                className="bg-cyan-900 p-6 rounded-2xl border border-cyan-700 shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)",
-                  backgroundSize: "18px 18px",
-                }}
+                className="bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 p-6 rounded-2xl border border-cyan-700 shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
               >
                 {/* Job Title */}
                 <div className="flex justify-between">

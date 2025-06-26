@@ -1,45 +1,356 @@
 "use client";
-
-import { IconMenu2 } from "@tabler/icons-react";
-import { UserButton } from "@clerk/nextjs";
-
-import { useRole } from "@/app/context/RoleContext";
+import { IconMenu2, IconBell, IconSearch, IconX } from "@tabler/icons-react";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import ShowCoursesDropdown from "./ShowCoursesDropdown";
 import Link from "next/link";
+import { useRoleStore } from "@/store/useRoleStore";
+import { Sparkles } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useSelectedCourseStore } from "@/store/useCourseStore";
+
+// Types
+interface Course {
+  _id: string;
+  title: string;
+  description?: string;
+  instructor?: string;
+  category?: string;
+}
 
 export default function DashNav({
   toggleSidebar,
 }: {
   toggleSidebar: () => void;
 }) {
-  const { role } = useRole();
+  const role = useRoleStore((state) => state.role);
+  const { user } = useUser();
+  const router = useRouter();
+  const setCourseId = useSelectedCourseStore((s) => s.setCourseId);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const { getToken } = useAuth();
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch courses on component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setIsLoading(true);
+        const token = await getToken();
+        const response = await fetch("http://localhost:5000/api/courses/list", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const coursesData = await response.json();
+          setCourses(coursesData);
+        }
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  // Filter courses based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredCourses([]);
+      setSelectedIndex(-1);
+      return;
+    }
+
+    const filtered = courses
+      .filter(
+        (course) =>
+          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.description
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          course.instructor
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          course.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .slice(0, 8); // Limit to 8 results
+
+    setFilteredCourses(filtered);
+    setSelectedIndex(-1);
+  }, [searchQuery, courses]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchFocused(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isSearchFocused || filteredCourses.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev < filteredCourses.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredCourses.length - 1
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < filteredCourses.length) {
+          handleCourseSelect(filteredCourses[selectedIndex]);
+        }
+        break;
+      case "Escape":
+        setIsSearchFocused(false);
+        setSelectedIndex(-1);
+        inputRef.current?.blur();
+        break;
+    }
+  };
+
+  // Handle course selection
+  const handleCourseSelect = (course: Course) => {
+    setSearchQuery(course.title);
+    setIsSearchFocused(false);
+    setSelectedIndex(-1);
+    // Use the same course selection logic as ShowCoursesDropdown
+    setCourseId(course._id);
+    router.push("/student-dashboard/home");
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery("");
+    setIsSearchFocused(false);
+    setSelectedIndex(-1);
+    inputRef.current?.focus();
+  };
 
   return (
-    <header className="h-16 bg-cyan-950 border-b border-cyan-800 shadow-sm fixed top-0 left-0 right-0 z-50 flex items-center px-4 md:px-6">
-      {/* Left Section: Hamburger + Logo */}
-      <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className="md:hidden text-white">
-          <IconMenu2 size={28} />
-        </button>
-        <Link href={"/"}>
-          {" "}
-          <span className="text-lg font-bold text-white hidden md:block">
-            <span className="text-yellow-400">IT</span> Jobs Factory
-          </span>
-        </Link>
-      </div>
+    <header className="h-16 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-xl fixed top-0 left-0 right-0 z-50 backdrop-blur-xl">
+      <div className="h-full flex items-center justify-between px-4 md:px-6">
+        {/* Mobile Layout */}
+        <div className="flex md:hidden w-full items-center justify-between relative">
+          {/* Enhanced Hamburger Menu */}
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-300 hover:text-white hover:bg-slate-700/50 hover:border-slate-600 transition-all duration-200 group"
+          >
+            <IconMenu2
+              size={20}
+              className="group-hover:scale-110 transition-transform duration-200"
+            />
+          </button>
 
-      {/* Center: Only for students */}
-      {role === "student" && (
-        <div className="flex-1 flex justify-start ml-40">
-          <ShowCoursesDropdown />
+          {/* Center Logo with Enhanced Styling */}
+          <Link
+            href={"/"}
+            className="absolute left-1/2 transform -translate-x-1/2 group"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-shadow">
+                <Sparkles size={14} className="text-white" />
+              </div>
+              <span className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                  IT
+                </span>{" "}
+                Jobs Factory
+              </span>
+            </div>
+          </Link>
+
+          {/* Enhanced Profile Section */}
+          <div className="flex items-center gap-2">
+            <button className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all duration-200 relative">
+              <IconBell size={18} />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse"></span>
+            </button>
+            <div className="scale-90">
+              <UserButton />
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Right: User profile */}
-      <div className="flex items-center gap-4">
-        <UserButton />
+        {/* Desktop Layout */}
+        <div className="hidden md:flex items-center w-full justify-between">
+          {/* Left: Enhanced Logo and Role Indicator */}
+          <div className="flex items-center gap-6">
+            <Link href={"/"} className="group flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-200 group-hover:scale-105">
+                <Sparkles size={16} className="text-white" />
+              </div>
+              <span className="text-xl font-bold text-white ">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                  IT
+                </span>{" "}
+                Jobs Factory
+              </span>
+            </Link>
+          </div>
+
+          {/* Center: Enhanced Search Bar and Courses Dropdown */}
+          <div className="flex-1 flex justify-center max-w-2xl mx-8">
+            <div className="flex items-center gap-4 w-full">
+              {/* Enhanced Search Bar with Dropdown */}
+              <div className="relative flex-1 max-w-md" ref={searchRef}>
+                <IconSearch
+                  size={18}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-10"
+                />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search courses, projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-700/50 transition-all duration-200"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors z-10"
+                  >
+                    <IconX size={16} />
+                  </button>
+                )}
+
+                {/* Search Results Dropdown */}
+                {isSearchFocused &&
+                  (searchQuery.trim() !== "" || isLoading) && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-20">
+                      {isLoading ? (
+                        <div className="p-4 text-center text-slate-400">
+                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400 mr-2"></div>
+                          Searching courses...
+                        </div>
+                      ) : filteredCourses.length > 0 ? (
+                        <div className="py-2">
+                          {filteredCourses.map((course, index) => (
+                            <button
+                              key={course._id}
+                              onClick={() => handleCourseSelect(course)}
+                              className={`w-full px-4 py-3 text-left hover:bg-slate-700/50 transition-colors duration-150 ${
+                                index === selectedIndex
+                                  ? "bg-slate-700/50 border-l-2 border-cyan-400"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-slate-200 font-medium text-sm truncate">
+                                    {course.title}
+                                  </h4>
+                                  {course.description && (
+                                    <p className="text-slate-400 text-xs mt-1 line-clamp-2">
+                                      {course.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {course.instructor && (
+                                      <span className="text-xs text-slate-500">
+                                        by {course.instructor}
+                                      </span>
+                                    )}
+                                    {course.category && (
+                                      <span className="text-xs text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full">
+                                        {course.category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : searchQuery.trim() !== "" ? (
+                        <div className="p-4 text-center text-slate-400">
+                          <p className="text-sm">
+                            No courses found for "{searchQuery}"
+                          </p>
+                          <p className="text-xs mt-1">
+                            Try a different search term
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+              </div>
+
+              {/* Courses Dropdown for students only */}
+              {role === "student" && (
+                <div className="shrink-0">
+                  <ShowCoursesDropdown />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Enhanced Action Items */}
+          <div className="flex items-center gap-3">
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              {/* Notifications */}
+              <button className="relative p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50 hover:border-slate-600 transition-all duration-200 group">
+                <IconBell size={18} className="group-hover:animate-pulse" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-lg"></span>
+              </button>
+
+              {/* Quick Access Menu */}
+              <div className="w-px h-6 bg-slate-600/50 mx-1"></div>
+            </div>
+
+            {/* Enhanced User Profile */}
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden lg:block">
+                <p className="text-sm font-medium text-slate-200">
+                  Welcome back!
+                </p>
+                <p className="text-xs text-slate-400">{user?.fullName}</p>
+              </div>
+              <div className="p-1 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <UserButton />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Subtle bottom glow effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent"></div>
     </header>
   );
 }

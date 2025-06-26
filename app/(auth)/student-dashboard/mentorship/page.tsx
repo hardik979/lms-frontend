@@ -47,13 +47,7 @@ export default function MentorshipPage() {
   return (
     <>
       {/* Mentorship Section */}
-      <section
-        className="bg-cyan-950 text-white rounded-xl py-16 px-4 sm:px-10"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-          backgroundSize: "20px 20px",
-        }}
-      >
+      <section className="bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900  text-white rounded-xl py-16 px-4 sm:px-10">
         <div className="max-w-7xl mx-auto text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold">
             Accelerate your career with our mentors
@@ -94,13 +88,7 @@ export default function MentorshipPage() {
       </section>
 
       {/* Placement Program Section */}
-      <section
-        className="bg-cyan-950 text-white rounded-xl mt-6 py-16 px-6 sm:px-12"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-          backgroundSize: "20px 20px",
-        }}
-      >
+      <section className="bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900  text-white rounded-xl mt-6 py-16 px-6 sm:px-12">
         <div className="max-w-7xl mx-auto">
           {/* Info Box */}
           <div className="bg-cyan-900 rounded-xl p-6 sm:p-10 shadow mb-12">

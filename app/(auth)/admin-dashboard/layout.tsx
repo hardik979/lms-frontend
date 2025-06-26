@@ -1,13 +1,13 @@
 "use client";
-// app/teacher-dashboard/layout.tsx
-import Sidebar from "@/components/SidebarNew";
+// app/admin-dashboard/layout.tsx
+
 import DashNav from "@/components/DashNav";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import LoadingPage from "@/components/Loader";
 import { useRoleStore } from "@/store/useRoleStore";
-export default function TeacherDashboardLayout({
+export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -33,7 +33,7 @@ export default function TeacherDashboardLayout({
         const data = await res.json();
         setRole(data.role); // set in global state
 
-        if (data.role !== "teacher") {
+        if (data.role !== "admin") {
           router.replace("/student-dashboard/home"); // 👈 Redirect students
         } else {
           setAuthorized(true);
@@ -50,11 +50,6 @@ export default function TeacherDashboardLayout({
   if (!isLoaded || !isSignedIn || !authorized) return <LoadingPage />;
   return (
     <div className="flex bg-cyan-950 min-h-screen">
-      <Sidebar
-        isOpen={sidebarOpen}
-        role="teacher"
-        onClose={() => setSidebarOpen(false)}
-      />{" "}
       {/* You can make it responsive later */}
       <div className="flex-1 overflow-y-auto max-h-screen">
         <DashNav toggleSidebar={() => setSidebarOpen(true)} />

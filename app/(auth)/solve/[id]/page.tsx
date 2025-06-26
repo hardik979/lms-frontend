@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +27,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import { LANGUAGES } from "@/constants";
 import LoadingPage from "@/components/Loader";
 import SolveLayout from "@/components/SolveLayout";
 
-// Dynamically import Monaco
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
 export default function SolvePage() {
@@ -50,14 +47,15 @@ export default function SolvePage() {
     { _id: string; title: string }[]
   >([]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       const token = await getToken();
 
-      // Fetch all questions and user data
       const [qRes, userRes] = await Promise.all([
         fetch(
-          `http://localhost:5000/api/practise/questions/665070b5fc13ae1a970003e4`,
+          `http://localhost:5000/api/practice/questions/665070b5fc13ae1a970003e4`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -81,7 +79,7 @@ export default function SolvePage() {
     const fetchQuestion = async () => {
       const token = await getToken();
       const res = await fetch(
-        `http://localhost:5000/api/practise/question/${id}`,
+        `http://localhost:5000/api/practice/question/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -95,10 +93,47 @@ export default function SolvePage() {
   }, [id, getToken]);
 
   const handleRunCode = () => {
-    setOutput("🧪 Judge0 integration coming soon...");
+    setOutput("🧪 Run functionality coming soon...");
   };
 
-  // Navigation logic
+  const handleSubmitCode = async () => {
+    setIsSubmitting(true);
+    setOutput("⏳ Evaluating...");
+
+    try {
+      const token = await getToken();
+      const res = await fetch("http://localhost:5000/api/judge0/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          problemId: id,
+          sourceCode: code,
+          language,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setOutput(
+          `✅ ${data.passed}/${
+            data.total
+          } Test Cases Passed\n\nStatus: ${data.status.toUpperCase()}`
+        );
+      } else {
+        setOutput(`❌ Submission failed: ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Submit Error:", err);
+      setOutput("❌ Something went wrong during submission.");
+    }
+
+    setIsSubmitting(false);
+  };
+
   const currentIndex = allQuestions.findIndex((q) => q._id === id);
   const prevQuestionId =
     currentIndex > 0 ? allQuestions[currentIndex - 1]?._id : null;
@@ -107,13 +142,10 @@ export default function SolvePage() {
       ? allQuestions[currentIndex + 1]?._id
       : null;
 
-  const goToPrev = () => {
-    if (prevQuestionId) router.push(`/solve/${prevQuestionId}`);
-  };
-
-  const goToNext = () => {
-    if (nextQuestionId) router.push(`/solve/${nextQuestionId}`);
-  };
+  const goToPrev = () =>
+    prevQuestionId && router.push(`/solve/${prevQuestionId}`);
+  const goToNext = () =>
+    nextQuestionId && router.push(`/solve/${nextQuestionId}`);
 
   if (!question) return <LoadingPage />;
 
@@ -130,15 +162,14 @@ export default function SolvePage() {
     >
       <div className="w-full h-screen bg-white">
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          {/* LEFT PANEL */}
           <ResizablePanel minSize={30} defaultSize={45}>
             <div
               className="p-6 h-full overflow-y-auto bg-cyan-950 text-white space-y-6"
               style={{
                 backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
-          `,
+                  linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                  linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+                `,
                 backgroundSize: "40px 40px",
               }}
             >
@@ -150,27 +181,16 @@ export default function SolvePage() {
 
                 <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger className="w-[160px] bg-cyan-900 text-white border-cyan-700">
-                    <SelectValue />
+                    <SelectValue placeholder="Select Language" />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGES.map((lang) => (
-                      <SelectItem key={lang.id} value={lang.id}>
-                        <div className="flex items-center gap-2">
-                          <Image
-                            src={`/${lang.id}.png`}
-                            alt={lang.name}
-                            width={20}
-                            height={20}
-                          />
-                          {lang.name}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Description */}
               <Card className="mb-4">
                 <CardHeader className="flex items-center gap-2">
                   <BookIcon className="w-5 h-5 text-primary" />
@@ -183,7 +203,6 @@ export default function SolvePage() {
                 </CardContent>
               </Card>
 
-              {/* Examples */}
               <Card className=" border-cyan-700">
                 <CardHeader className="flex items-center gap-2">
                   <LightbulbIcon className="w-5 h-5 text-yellow-400" />
@@ -193,7 +212,7 @@ export default function SolvePage() {
                   {Array.isArray(question.examples) ? (
                     question.examples.map((ex: any, i: number) => (
                       <div key={i}>
-                        <p className="text-sm font-medium  mb-1">
+                        <p className="text-sm font-medium mb-1">
                           Example {i + 1}
                         </p>
                         <pre className="bg-muted/80 p-3 rounded-md font-mono text-sm whitespace-pre-wrap">
@@ -211,12 +230,11 @@ export default function SolvePage() {
                 </CardContent>
               </Card>
 
-              {/* Test Cases */}
               {Array.isArray(question.testCases) &&
                 question.testCases.length > 0 && (
                   <Card className=" border-cyan-700">
                     <CardHeader className="flex items-center gap-2">
-                      <AlertCircleIcon className="w-5 h-5 " />
+                      <AlertCircleIcon className="w-5 h-5" />
                       <CardTitle>Test Cases</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
@@ -226,7 +244,7 @@ export default function SolvePage() {
                           className="bg-muted/80 p-3 rounded-md font-mono whitespace-pre-wrap"
                         >
                           Test Case {i + 1}:{"\n"}Input: {tc.input}
-                          {"\n"}Output: {tc.output}
+                          {"\n"}Expected Output: {tc.expectedOutput}
                         </pre>
                       ))}
                     </CardContent>
@@ -237,10 +255,8 @@ export default function SolvePage() {
 
           <ResizableHandle withHandle />
 
-          {/* RIGHT PANEL */}
           <ResizablePanel defaultSize={55}>
             <ResizablePanelGroup direction="vertical">
-              {/* Editor */}
               <ResizablePanel defaultSize={70}>
                 <Editor
                   height="100%"
@@ -259,7 +275,6 @@ export default function SolvePage() {
 
               <ResizableHandle withHandle />
 
-              {/* Output Panel */}
               <ResizablePanel defaultSize={30}>
                 <div className="h-full bg-gray-100 p-4 space-y-4 overflow-y-auto">
                   <div className="flex gap-3">
@@ -269,8 +284,12 @@ export default function SolvePage() {
                     >
                       ▶ Run Code
                     </Button>
-                    <Button variant="secondary" className="ml-2 bg-neutral-200">
-                      Submit
+                    <Button
+                      onClick={handleSubmitCode}
+                      disabled={isSubmitting}
+                      className="ml-2 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isSubmitting ? "Submitting..." : "Submit"}
                     </Button>
                   </div>
                   <div className="bg-white p-3 rounded text-sm font-mono border">

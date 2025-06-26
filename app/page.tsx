@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 
 import Marquee from "@/components/Marquee";
 import Navbar from "@/components/Navbar";
+import RotatingText from "@/components/TextChange";
 
 import PopupModal from "@/components/ui/PopModel";
 import { AlmaXTimeline } from "@/components/ui/TimelineDemo";
@@ -46,20 +47,18 @@ export default function Page() {
               Few seats left — Launch your tech career by 16th May, 2025
             </span>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-white">
-            Become a Job ready - Full Stack Developer
-          </h1>
-          {/* 
+          {/* <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-white">
+            Build Your Career in Tech with Real Industry Skills
+          </h1> */}
+
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-white">
-            Become a Job-ready{" "}
             <RotatingText
               texts={[
-                "Full Stack Developer",
-                "Data Analyst",
-                "AI Engineer",
-                "Cloud Engineer",
+                "Build Your Career in Tech with Real Industry Skills",
+                "Kickstart Your Career in the IT Industry",
+                "Get Ready for a Future-Proof Career in Tech",
               ]}
-              mainClassName="inline-block px-1 text-cyan-400 whitespace-nowrap" // ✅ ensures no wrap
+              mainClassName="inline-block text-cyan-400 whitespace-nowrap text-center"
               staggerFrom="first"
               initial={{ y: "100%", opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -68,11 +67,12 @@ export default function Page() {
               splitLevelClassName="overflow-hidden"
               elementLevelClassName="inline-block"
               transition={{ type: "spring", damping: 30, stiffness: 400 }}
-              rotationInterval={2000}
+              rotationInterval={5000}
               auto
               loop
             />
-          </h1> */}
+          </h1>
+
           <div className="flex items-center gap-2 text-sm mb-4 text-white">
             <IconBuildingBank size={16} className="text-sky-400" />
             <span>Trusted by Hiring Partners like TCS, IBM, and Accenture</span>
@@ -85,7 +85,9 @@ export default function Page() {
                 className="text-green-400 mt-0.5"
               />
               <span>
-                6-month hybrid online training with daily live mentorship
+                Join our 3-Month Job Bootcamp — master monitoring & incident
+                response
+                <br /> with Grafana, Splunk, and more.
               </span>
             </div>
             <div className="flex items-start gap-2">
@@ -94,7 +96,7 @@ export default function Page() {
                 className="text-green-400 mt-0.5"
               />
               <span>
-                Work on 5+ real-world projects with GitHub portfolio support
+                Work on Industry grade Monitoring and Observability tools.
               </span>
             </div>
             <div className="flex items-start gap-2">
@@ -103,7 +105,7 @@ export default function Page() {
                 className="text-green-400 mt-0.5"
               />
               <span>
-                Built for graduates, job-switchers & early professionals
+                Built for Graduates, Job-Switchers & Early Professionals.
               </span>
             </div>
             <div className="flex items-start gap-2">
@@ -112,7 +114,8 @@ export default function Page() {
                 className="text-green-400 mt-0.5"
               />
               <span>
-                AI-integrated curriculum with hands-on weekly coding challenges
+                AI-integrated curriculum with hands-on weekly Quizes and
+                Assignments.
               </span>
             </div>
             <div className="flex items-start gap-2">
@@ -120,7 +123,7 @@ export default function Page() {
                 size={16}
                 className="text-green-400 mt-0.5"
               />
-              <span>Guaranteed job support with 100+ hiring partners</span>
+              <span>100% Job Placement Assistance with Interview Prep.</span>
             </div>
           </div>
 
@@ -134,15 +137,46 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center w-full">
-          <img
-            src="/code.jpg"
-            alt="Hero Image"
-            className=" pt-6 shadow-2xl w-full h-auto max-w-full object-cover max-h-[500px] sm:max-h-[600px] md:max-h-[760px]"
-          />
-          <p className="text-center text-base text-cyan-300 mt-4 max-w-[90%]">
-            India’s Practical Training Program for Future Tech Leaders
-          </p>
+        <div className="w-full flex flex-col justify-between pt-12 h-full">
+          {/* Hero Image - Top Half */}
+          <div className="h-[55%] flex justify-center items-center">
+            <img
+              src="/hero2.png"
+              alt="Hero Image"
+              className="shadow-2xl w-full h-full object-cover rounded-t-md"
+            />
+          </div>
+
+          {/* Form - Bottom Half */}
+          <div className="h-[45%] bg-white p-6 rounded-b-md shadow-xl text-cyan-900">
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              Book Your Free Career Counseling
+            </h3>
+            <form className="space-y-3">
+              <input
+                type="text"
+                placeholder="Full Name"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+              <input
+                type="text"
+                placeholder="Educational Qualification"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+              <button
+                type="submit"
+                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-md font-medium transition"
+              >
+                Submit
+              </button>
+            </form>
+          </div>
         </div>
       </section>
 

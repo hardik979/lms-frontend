@@ -82,14 +82,11 @@ export default function Navbar() {
             <a href="/about" className="hover:underline  text-white">
               Our Story
             </a>
-            <Link href="/student-dashboard/home">
+            <Link href="/redirect">
               <Button className="bg-cyan-600 text-white px-4 py-2 rounded-md hover:bg-cyan-700">
-                Free Sign-In
+                Sign-In
               </Button>
             </Link>
-            <Button className="bg-cyan-600 text-white px-4 py-2 rounded-md hover:bg-cyan-700">
-              Candidate Sign-In
-            </Button>
           </div>
 
           {/* Hamburger (Mobile) */}
@@ -147,7 +144,7 @@ export default function Navbar() {
         {/* Left Text with Icon */}
         <span className="text-sm sm:text-base font-semibold tracking-wide uppercase flex items-center gap-2">
           <PinIcon size={16} className="text-white" />
-          Master Full Stack in just 6 months
+          Launch your Career in Tech Industry
         </span>
 
         {/* Center Text */}
@@ -159,13 +156,17 @@ export default function Navbar() {
         </span>
 
         {/* CTA Button */}
-        <a href="/Internship" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://wa.me/+919425645642?text=Hi%2C%20can%20you%20tell%20me%20more" // Replace with your number
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <motion.button
             className="bg-white text-cyan-800 px-4 py-2 rounded-md text-sm font-semibold hover:bg-white/90 shadow-md"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
           >
-            Book Your Free Demo
+            Whatsapp Now
           </motion.button>
         </a>
       </motion.div>
