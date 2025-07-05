@@ -14,6 +14,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 
 type VideoForm = {
   title: string;
@@ -65,7 +66,7 @@ export default function CourseStructureEditor({
     try {
       const token = await getToken();
       const res = await fetch(
-        `http://localhost:5000/api/teacher/update-structure/${courseId}`,
+        `${API_BASE_URL}/api/teacher/update-structure/${courseId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -9,7 +9,7 @@ type CourseStore = {
 export const useSelectedCourseStore = create<CourseStore>()(
   persist(
     (set) => ({
-      courseId: "683047f0007b2b71a9a1f4da", // ✅ default on first load
+      courseId: "68678c7dd04068add6b440af", // ✅ default on first load
       setCourseId: (id) => set({ courseId: id }),
     }),
     {

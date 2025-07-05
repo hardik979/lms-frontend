@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
+import HLSPlayer from "@/components/HLSPlayer";
 
 export default function WatchVideoPage() {
   const searchParams = useSearchParams();
@@ -37,7 +39,7 @@ export default function WatchVideoPage() {
       if (!token || !courseId) return;
 
       try {
-        const userRes = await fetch("http://localhost:5000/api/users/me", {
+        const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userData = await userRes.json();
@@ -55,7 +57,7 @@ export default function WatchVideoPage() {
         }
 
         const courseRes = await fetch(
-          `http://localhost:5000/api/courses/${courseId}`,
+          `${API_BASE_URL}/api/courses/${courseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -65,7 +67,7 @@ export default function WatchVideoPage() {
 
         // Fetch resume time
         const progressRes = await fetch(
-          `http://localhost:5000/api/progress/chapter-progress?courseId=${courseId}`,
+          `${API_BASE_URL}/api/progress/chapter-progress?courseId=${courseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -105,13 +107,13 @@ export default function WatchVideoPage() {
       goTo(
         chapterIndex,
         videoIndex + 1,
-        currentChapter.videos[videoIndex + 1].cloudinaryId
+        currentChapter.videos[videoIndex + 1].bunnyVideoId
       );
     } else if (chapterIndex + 1 < course.chapters.length) {
       goTo(
         chapterIndex + 1,
         0,
-        course.chapters[chapterIndex + 1].videos[0].cloudinaryId
+        course.chapters[chapterIndex + 1].videos[0].bunnyVideoId
       );
     }
   };
@@ -121,7 +123,7 @@ export default function WatchVideoPage() {
       goTo(
         chapterIndex,
         videoIndex - 1,
-        course.chapters[chapterIndex].videos[videoIndex - 1].cloudinaryId
+        course.chapters[chapterIndex].videos[videoIndex - 1].bunnyVideoId
       );
     } else if (chapterIndex > 0) {
       const prevChapter = course.chapters[chapterIndex - 1];
@@ -129,7 +131,7 @@ export default function WatchVideoPage() {
       goTo(
         chapterIndex - 1,
         prevChapter.videos.length - 1,
-        lastVideo.cloudinaryId
+        lastVideo.bunnyVideoId
       );
     }
   };
@@ -140,7 +142,7 @@ export default function WatchVideoPage() {
 
     const lastWatchedTime = Math.floor(videoRef.current.currentTime);
 
-    await fetch("http://localhost:5000/api/progress/update", {
+    await fetch(`${API_BASE_URL}/api/progress/update`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -173,7 +175,11 @@ export default function WatchVideoPage() {
   };
 
   if (!videoId || loading || !course) return <LoadingPage />;
-  const currentVideo = course.chapters[chapterIndex].videos[videoIndex];
+
+  // 🔥 Locate the current video by bunnyVideoId:
+  const currentVideo = course.chapters[chapterIndex].videos.find(
+    (v: any) => v.bunnyVideoId === videoId
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -195,7 +201,7 @@ export default function WatchVideoPage() {
               ch.videos.map((vid: any, vi: number) => (
                 <DropdownMenuItem
                   key={`${ci}-${vi}`}
-                  onClick={() => goTo(ci, vi, vid.cloudinaryId)}
+                  onClick={() => goTo(ci, vi, vid.bunnyVideoId)}
                 >
                   {vid.title}
                 </DropdownMenuItem>
@@ -214,13 +220,11 @@ export default function WatchVideoPage() {
           backgroundSize: "20px 20px",
         }}
       >
-        <video
-          controls
-          ref={videoRef}
+        <HLSPlayer
+          src={currentVideo?.playbackUrl}
+          videoRef={videoRef}
           onPause={handleVideoPause}
           onEnded={handleVideoEnd}
-          className="w-full h-full max-w-6xl max-h-[80vh] object-contain"
-          src={`https://res.cloudinary.com/doliynoks/video/upload/${videoId}.mp4`}
         />
         {resumeTime && (
           <div className="absolute bottom-[4.5rem] left-1/2 transform -translate-x-1/2 z-10">

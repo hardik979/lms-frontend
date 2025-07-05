@@ -18,6 +18,7 @@ import {
 import { toast } from "react-toastify";
 import { useAuth } from "@clerk/nextjs";
 import LoadingPage from "@/components/Loader";
+import { API_BASE_URL } from "@/lib/api";
 
 type Project = {
   _id: string;
@@ -41,7 +42,7 @@ export default function ProjectEditor({ courseId }: { courseId: string }) {
       try {
         const token = await getToken();
         const res = await fetch(
-          `http://localhost:5000/api/projects?courseId=${courseId}`,
+          `${API_BASE_URL}/api/projects?courseId=${courseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -75,7 +76,7 @@ export default function ProjectEditor({ courseId }: { courseId: string }) {
     try {
       const token = await getToken();
       const res = await fetch(
-        `http://localhost:5000/api/projects/update/${editingId}`,
+        `${API_BASE_URL}/api/projects/update/${editingId}`,
         {
           method: "PATCH",
           headers: {
@@ -116,12 +117,9 @@ export default function ProjectEditor({ courseId }: { courseId: string }) {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/projects/delete/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/projects/delete/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Delete failed");
       setProjects((prev) => prev.filter((p) => p._id !== id));
       toast.success("Project deleted!");

@@ -1,35 +1,66 @@
 "use client";
 
 import Link from "next/link";
-import { GraduationCap, BarChartIcon, ChevronDown } from "lucide-react";
+import {
+  GraduationCap,
+  ChevronDown,
+  BarChart,
+  ServerCog,
+  Code2,
+} from "lucide-react";
 import { useState, useRef } from "react";
 
 const sections = {
-  "Data Analytics": {
-    title: "Data Analytics",
-    href: "/data_analytics",
-    desc: "Learn SQL, Python, Excel, Tableau, and real-world business problem solving.",
-    icon: <BarChartIcon size={18} className="text-cyan-700" />,
-    tagline: " For college students, graduates & working professionals",
-    points: [
-      "• Industry-Endorsed Curriculum",
-      "• Hands-on Projects",
-      "• 100% Job Support",
-      "• Real Interview Preparation",
-    ],
-  },
-
-  "Internship & Placement Program": {
-    title: "Internship & Placement Program",
-    href: "/Internship",
-    desc: "Work on real projects, build a strong GitHub, and get placement support.",
+  "100% Job Assistance Bootcamp": {
+    title: "100% Job Assistance Bootcamp",
+    href: "/bootcamp",
+    desc: "Work on industry grade monitoring tools, and get placement support.",
     icon: <GraduationCap size={18} className="text-cyan-700" />,
-    tagline: " For final-year students & recent graduates seeking placements",
+    tagline: " For graduates seeking placements",
     points: [
-      "• Real Projects",
-      "• GitHub Portfolio",
+      "• Monitoring Tools",
+      "• Hands-on Practice",
       "• Mock Interviews",
       "• Unlimited Interview Access",
+    ],
+  },
+  "Data Analytics": {
+    title: "Data Analytics",
+    href: "/data-analytics",
+    desc: "Learn SQL, Python, Excel, Tableau, and real-world business problem solving.",
+    icon: <BarChart size={18} className="text-cyan-700" />,
+    tagline: " For college students, graduates & working professionals",
+    points: [
+      "• Industry-Endorsed",
+      "• Real-World Projects",
+      "• 100% Job Support",
+      "• Interview Preparation",
+    ],
+  },
+  DevOps: {
+    title: "DevOps & Cloud",
+    href: "/devops",
+    desc: "Master CI/CD, Docker, Kubernetes, AWS, and real-world automation skills.",
+    icon: <ServerCog size={18} className="text-cyan-700" />,
+    tagline: " For IT professionals, sysadmins & aspiring cloud engineers",
+    points: [
+      "• Comprehensive Techniques",
+      "• Cloud Deployments",
+      "• Career-Focused Curriculum",
+      "• Personalized Mentorship",
+    ],
+  },
+  "Full Stack Web Development": {
+    title: "Full Stack Web Development",
+    href: "/full-stack",
+    desc: "Build dynamic web apps with HTML, CSS, JavaScript, React, Node.js, and databases.",
+    icon: <Code2 size={18} className="text-cyan-700" />,
+    tagline: " For beginners, graduates & career switchers",
+    points: [
+      "• Full Stack Projects",
+      "• Industry-Ready Skills",
+      "• Expert-Led Training",
+      "• Placement Assistance",
     ],
   },
 };
@@ -57,7 +88,7 @@ export default function CoursesDropdown() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button className="flex items-center gap-2 text-white bg-cyan-600 px-4 py-2 rounded-md hover:bg-cyan-700 transition-colors">
+      <button className="flex items-center  [font-family:var(--font-raleway)] gap-2 text-cyan-950 bg-white px-4 py-2 rounded-md hover:bg-neutral-200 transition-colors">
         Courses
         <ChevronDown
           size={18}

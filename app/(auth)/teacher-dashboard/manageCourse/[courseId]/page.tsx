@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import CourseStructureEditor from "./_tabs/CourseStructureEditor";
 import PracticeEditor from "./_tabs/practiceEditor";
 import ProjectEditor from "./_tabs/ProjectEditor";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function EditCoursePage() {
   const { courseId } = useParams();
@@ -19,14 +20,11 @@ export default function EditCoursePage() {
     const fetchCourse = async () => {
       try {
         const token = await getToken();
-        const res = await fetch(
-          `http://localhost:5000/api/courses/${courseId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await fetch(`${API_BASE_URL}/api/courses/${courseId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const data = await res.json();
         setCourse(data.course);
       } catch (err) {

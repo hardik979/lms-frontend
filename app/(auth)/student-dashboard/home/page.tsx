@@ -20,6 +20,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
 import LoadingPage from "@/components/Loader";
+import { API_BASE_URL } from "@/lib/api";
 
 const Home = () => {
   const { getToken, isSignedIn } = useAuth();
@@ -36,7 +37,7 @@ const Home = () => {
   // Set default course ID if none selected
   useEffect(() => {
     if (!selectedCourseId) {
-      setCourseId("683047f0007b2b71a9a1f4da"); // default fallback course
+      setCourseId("68678c7dd04068add6b440af"); // default fallback course
     }
   }, [selectedCourseId, setCourseId]);
 
@@ -48,7 +49,7 @@ const Home = () => {
       try {
         // Fetch course details
         const courseRes = await fetch(
-          `http://localhost:5000/api/courses/${selectedCourseId}`,
+          `${API_BASE_URL}/api/courses/${selectedCourseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -57,7 +58,7 @@ const Home = () => {
         setSelectedCourse(courseData.course);
 
         // Fetch user info
-        const userRes = await fetch("http://localhost:5000/api/users/me", {
+        const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userData = await userRes.json();
@@ -148,7 +149,7 @@ const Home = () => {
                     animate={{ scale: 1 }}
                     className="mt-4 md:mt-0 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg"
                   >
-                    📋 Submission Pending
+                    📋 Register Now
                   </motion.span>
                 </div>
 
@@ -213,7 +214,7 @@ const Home = () => {
                   You're All Set!
                 </h2>
                 <p className="text-green-100 text-lg mb-6">
-                  You have already purchased{" "}
+                  You have already Enrolled in{" "}
                   <strong className="text-green-300">
                     {selectedCourse.title}
                   </strong>
@@ -221,7 +222,9 @@ const Home = () => {
                   <br />
                   Ready to start your learning journey?
                 </p>
-                <Link href="/learn">
+                <Link
+                  href={`/student-dashboard/course?id=68678c7dd04068add6b440af`}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
@@ -288,7 +291,7 @@ const Home = () => {
                   </span>
                 </div>
                 <p className="text-cyan-100 text-sm">
-                  12-month part-time program with live classes
+                  3-month part-time program with live classes
                 </p>
               </motion.div>
 
@@ -310,7 +313,7 @@ const Home = () => {
 
             {!hasPurchasedCourse && (
               <div className="text-center">
-                <Link href="/Onboarding">
+                <Link href="/MentorshipForm">
                   <motion.button
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}

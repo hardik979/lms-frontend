@@ -2,6 +2,8 @@
 
 import SuccessCarousel from "@/components/Carousel";
 import { useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function HireFromUsSection() {
   const [form, setForm] = useState({
@@ -17,15 +19,53 @@ export default function HireFromUsSection() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Handle form submission logic (e.g., send to API)
-    console.log("Form submitted", form);
+
+    // Basic validations
+    if (!form.name || !form.email || !form.company || !form.message) {
+      toast.error("Please fill out all fields.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    const formBody = new URLSearchParams();
+    // Replace entry IDs with your Google Form's actual field IDs:
+    formBody.append("entry.1748576999", form.name); // Your Name
+    formBody.append("entry.821465510", form.email); // Email
+    formBody.append("entry.1134340606", form.company); // Company
+    formBody.append("entry.1821334216", form.message); // Message
+
+    try {
+      await fetch(
+        "https://docs.google.com/forms/u/0/d/e/1FAIpQLSfC3rD-LEwrRsTNkR05S3Ro5PJcGgKN-PXbv8U9OzSPlcYZlg/formResponse",
+        {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: formBody.toString(),
+        }
+      );
+
+      toast.success("Inquiry submitted successfully!");
+      setForm({ name: "", email: "", company: "", message: "" });
+    } catch (error) {
+      console.error("Submit error", error);
+      toast.error("Failed to submit. Please try again later.");
+    }
   };
 
   return (
     <>
-      <section className="bg-cyan-950 pt-[200px] text-white px-6 py-20 min-h-screen flex items-center">
+      <ToastContainer position="top-center" autoClose={3000} />
+      <section className="bg-cyan-950 pt-[120px] sm:pt-[140px] lg:pt-[160px] text-white px-6 py-20 min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-12">
           {/* Left: Value Prop */}
           <div className="flex-1">

@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
+import { API_BASE_URL } from "../api";
 
 export function useActiveCourseId() {
   const searchParams = useSearchParams();
@@ -36,23 +37,25 @@ export function useActiveCourseId() {
         const token = await getToken();
         if (!token) return;
 
-        const res = await fetch("http://localhost:5000/api/users/courses", {
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         const data = await res.json();
-        const internshipCourse =
-          data.courses.find((c: any) =>
-            c.title.toLowerCase().includes("internship")
-          ) || data.courses[0];
 
-        if (internshipCourse) {
-          setFinalCourseId(internshipCourse._id);
-          setCourseId(internshipCourse._id);
+        // 🔥 Updated logic: exact match on title (case-sensitive)
+        const jobAssistanceCourse =
+          data.courses.find(
+            (c: any) => c.title === "100% Job-Assistance Bootcamp"
+          ) || data.courses[0]; // fallback to first course if not found
+
+        if (jobAssistanceCourse) {
+          setFinalCourseId(jobAssistanceCourse._id);
+          setCourseId(jobAssistanceCourse._id);
           router.replace(
-            `${window.location.pathname}?courseId=${internshipCourse._id}`
+            `${window.location.pathname}?courseId=${jobAssistanceCourse._id}`
           );
         }
       } catch (err) {

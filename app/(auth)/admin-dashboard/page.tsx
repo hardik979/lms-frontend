@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Check,
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function AdminDashboardPage() {
   const { getToken } = useAuth();
@@ -46,13 +47,13 @@ export default function AdminDashboardPage() {
       const token = await getToken();
       try {
         const [summaryRes, usersRes, coursesRes] = await Promise.all([
-          fetch("http://localhost:5000/api/admin/summary", {
+          fetch(`${API_BASE_URL}/api/admin/summary`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:5000/api/admin/users", {
+          fetch(`${API_BASE_URL}/api/admin/users`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:5000/api/admin/courses", {
+          fetch(`${API_BASE_URL}/api/admin/courses`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -91,7 +92,7 @@ export default function AdminDashboardPage() {
     setConfirmationModal({ ...confirmationModal, isOpen: false });
 
     try {
-      await fetch(`http://localhost:5000/api/admin/${userId}/role`, {
+      await fetch(`${API_BASE_URL}/api/admin/${userId}/role`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -100,7 +101,7 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({ newRole }),
       });
 
-      const res = await fetch("http://localhost:5000/api/admin/users", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

@@ -9,6 +9,7 @@ import { BadgeCheckIcon, Lock, ExternalLink, Code2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import LoadingPage from "@/components/Loader";
+import { API_BASE_URL } from "@/lib/api";
 
 type Project = {
   _id: string;
@@ -44,7 +45,7 @@ export default function ProjectsPage() {
         }
 
         const res = await fetch(
-          `http://localhost:5000/api/projects/${activeCourseId}`,
+          `${API_BASE_URL}/api/projects/${activeCourseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

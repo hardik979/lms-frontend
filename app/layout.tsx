@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { DM_Sans, Montserrat } from "next/font/google";
+import { Montserrat, Righteous } from "next/font/google";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
-const dmSans = DM_Sans({ subsets: ["latin"] });
 
+const righteous = Righteous({
+  variable: "--font-righteous",
+  weight: ["400"],
+  subsets: ["latin"],
+  display: "swap",
+});
 export const metadata: Metadata = {
   title: "IT Job Factory",
   description: "IT job Factory learning management system",
@@ -21,7 +26,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${montserrat.className} ${dmSans.className}`}>
+        <body className={`${montserrat.className} ${righteous.variable}`}>
           {children}
 
           <ToastContainer />

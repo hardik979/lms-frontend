@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import LoadingPage from "@/components/Loader";
 import { useRoleStore } from "@/store/useRoleStore";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function RedirectPage() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -19,12 +20,12 @@ export default function RedirectPage() {
       if (!token) return;
 
       // Optional: sync user to DB
-      await fetch("http://localhost:5000/api/users/sync", {
+      await fetch(`${API_BASE_URL}/api/users/sync`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const res = await fetch("http://localhost:5000/api/users/me", {
+      const res = await fetch(`${API_BASE_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

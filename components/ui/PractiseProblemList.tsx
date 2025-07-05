@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import LoadingPage from "../Loader";
+import { API_BASE_URL } from "@/lib/api";
 
 type Problem = {
   _id: string;
@@ -30,10 +31,10 @@ export default function PracticeProblemList({
       const token = await getToken();
 
       const [problemsRes, userRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/practice/questions/${courseId}`, {
+        fetch(`${API_BASE_URL}/api/practice/questions/${courseId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://localhost:5000/api/users/me`, {
+        fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

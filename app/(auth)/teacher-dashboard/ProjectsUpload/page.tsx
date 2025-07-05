@@ -17,6 +17,7 @@ import {
   CheckCircle,
   ArrowDownRight,
 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function UploadProjectPage() {
   const { getToken } = useAuth();
@@ -37,7 +38,7 @@ export default function UploadProjectPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       const token = await getToken();
-      const res = await fetch("http://localhost:5000/api/users/courses", {
+      const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -136,7 +137,7 @@ export default function UploadProjectPage() {
         });
       }, 200);
 
-      const res = await fetch("http://localhost:5000/api/projects/upload", {
+      const res = await fetch(`${API_BASE_URL}/api/projects/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

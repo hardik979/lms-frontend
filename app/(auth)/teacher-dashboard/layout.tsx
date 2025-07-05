@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import LoadingPage from "@/components/Loader";
 import { useRoleStore } from "@/store/useRoleStore";
+import { API_BASE_URL } from "@/lib/api";
 export default function TeacherDashboardLayout({
   children,
 }: {
@@ -26,7 +27,7 @@ export default function TeacherDashboardLayout({
         const token = await getToken();
         if (!token) return;
 
-        const res = await fetch("http://localhost:5000/api/users/me", {
+        const res = await fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

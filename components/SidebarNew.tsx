@@ -16,6 +16,7 @@ import {
   IconChevronDown,
 } from "@tabler/icons-react";
 import { Projector, TrophyIcon } from "lucide-react";
+import { useActiveCourseId } from "@/lib/hooks/useDefaultCourse";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -23,90 +24,12 @@ type SidebarProps = {
   role: "student" | "teacher";
 };
 
-const studentLinks = [
-  {
-    label: "Home",
-    icon: <IconHome size={20} />,
-    href: "/student-dashboard/home",
-    description: "Dashboard overview",
-  },
-  {
-    label: "Learn",
-    icon: <IconBook size={20} />,
-    href: "/student-dashboard/course?id=683047f0007b2b71a9a1f4da",
-    description: "Course materials",
-  },
-  {
-    label: "Classroom",
-    icon: <IconDeviceLaptop size={20} />,
-    href: "/student-dashboard/classroom",
-    description: "Live sessions",
-  },
-  {
-    label: "Practice",
-    icon: <IconTargetArrow size={20} />,
-    href: "/student-dashboard/practise",
-    description: "Skill exercises",
-  },
-  {
-    label: "Projects",
-    icon: <IconPuzzle size={20} />,
-    href: "/student-dashboard/projects",
-    description: "Build portfolio",
-  },
-  {
-    label: "Mentorship",
-    icon: <IconMessage size={20} />,
-    href: "/student-dashboard/mentorship",
-    description: "Get guidance",
-  },
-  {
-    label: "Leaderboard",
-    icon: <TrophyIcon size={20} />,
-    href: "/student-dashboard/Leaderboard",
-    description: "Track progress",
-  },
-  {
-    label: "Jobs",
-    icon: <IconBriefcase size={20} />,
-    href: "/student-dashboard/Jobs",
-    description: "Career opportunities",
-  },
-];
-
-const teacherLinks = [
-  {
-    label: "Upload Course",
-    icon: <IconTargetArrow size={20} />,
-    href: "/teacher-dashboard/Courseupload",
-    description: "Create new courses",
-  },
-  {
-    label: "Upload Practice",
-    icon: <IconBook size={20} />,
-    href: "/teacher-dashboard/QuestionsUpload",
-    description: "Add practice questions",
-  },
-  {
-    label: "Upload Projects",
-    icon: <Projector size={20} />,
-    href: "/teacher-dashboard/ProjectsUpload",
-    description: "Add project templates",
-  },
-  {
-    label: "Manage Courses",
-    icon: <IconChalkboardTeacher size={20} />,
-    href: "/teacher-dashboard/manageCourse",
-    description: "Edit and organize",
-  },
-];
-
 export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const pathname = usePathname();
   const [selectedCourse, setSelectedCourse] = useState("Masters in CS");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const links = role === "teacher" ? teacherLinks : studentLinks;
 
+  const activeCourseId = useActiveCourseId();
   const courseOptions = [
     "Masters in CS",
     "Full Stack Developer",
@@ -114,7 +37,91 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
     "Machine Learning",
     "DevOps Engineering",
   ];
+  const studentLinks = [
+    {
+      label: "Home",
+      icon: <IconHome size={20} />,
+      href: "/student-dashboard/home",
+      description: "Dashboard overview",
+    },
+    {
+      label: "Classroom",
+      icon: <IconDeviceLaptop size={20} />,
+      href: "/student-dashboard/classroom",
+      description: "Live sessions",
+    },
+    {
+      label: "Lectures",
+      icon: <IconBook size={20} />,
+      href: `/student-dashboard/course?id=${activeCourseId}`,
+      description: "Self-Paced Videos",
+    },
 
+    {
+      label: "Practice",
+      icon: <IconTargetArrow size={20} />,
+      href: "/student-dashboard/practise",
+      description: "Quiz & Assignments",
+    },
+    {
+      label: "Projects",
+      icon: <IconPuzzle size={20} />,
+      href: "/student-dashboard/projects",
+      description: "Build portfolio",
+    },
+    {
+      label: "Mentorship",
+      icon: <IconMessage size={20} />,
+      href: "/student-dashboard/mentorship",
+      description: "Get guidance",
+    },
+    {
+      label: "Leaderboard",
+      icon: <TrophyIcon size={20} />,
+      href: "/student-dashboard/Leaderboard",
+      description: "Track progress",
+    },
+    {
+      label: "Jobs",
+      icon: <IconBriefcase size={20} />,
+      href: "/student-dashboard/Jobs",
+      description: "Career opportunities",
+    },
+  ];
+
+  const teacherLinks = [
+    {
+      label: "Upload Course",
+      icon: <IconTargetArrow size={20} />,
+      href: "/teacher-dashboard/Courseupload",
+      description: "Create new courses",
+    },
+    {
+      label: "Upload Chapter's Tests ",
+      icon: <IconTargetArrow size={20} />,
+      href: "/teacher-dashboard/chapter-testQuestionsUpload",
+      description: "Create new courses",
+    },
+    {
+      label: "Upload Practice",
+      icon: <IconBook size={20} />,
+      href: "/teacher-dashboard/QuestionsUpload",
+      description: "Add practice questions",
+    },
+    {
+      label: "Upload Projects",
+      icon: <Projector size={20} />,
+      href: "/teacher-dashboard/ProjectsUpload",
+      description: "Add project templates",
+    },
+    {
+      label: "Manage Courses",
+      icon: <IconChalkboardTeacher size={20} />,
+      href: "/teacher-dashboard/manageCourse",
+      description: "Edit and organize",
+    },
+  ];
+  const links = role === "teacher" ? teacherLinks : studentLinks;
   return (
     <>
       {/* Enhanced backdrop with blur effect */}
@@ -140,8 +147,8 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-shadow">
               <img src="/logo.png" alt="Logo" className="w-5 h-5" />
             </div>
-            <span className="text-white font-bold text-lg tracking-tight">
-              IT Jobs Factory
+            <span className="text-sky-400 font-bold text-lg tracking-tight">
+              <span className="text-yellow-500">IT</span> Jobs Factory
             </span>
           </Link>
 

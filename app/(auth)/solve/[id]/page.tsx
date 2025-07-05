@@ -29,6 +29,7 @@ import {
 
 import LoadingPage from "@/components/Loader";
 import SolveLayout from "@/components/SolveLayout";
+import { API_BASE_URL } from "@/lib/api";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
 
@@ -55,12 +56,12 @@ export default function SolvePage() {
 
       const [qRes, userRes] = await Promise.all([
         fetch(
-          `http://localhost:5000/api/practice/questions/665070b5fc13ae1a970003e4`,
+          `${API_BASE_URL}/api/practice/questions/665070b5fc13ae1a970003e4`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         ),
-        fetch("http://localhost:5000/api/users/me", {
+        fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -78,12 +79,9 @@ export default function SolvePage() {
   useEffect(() => {
     const fetchQuestion = async () => {
       const token = await getToken();
-      const res = await fetch(
-        `http://localhost:5000/api/practice/question/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/practice/question/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setQuestion(data);
       setCode(data.starterCode?.[language] || "// Write your code here");
@@ -102,7 +100,7 @@ export default function SolvePage() {
 
     try {
       const token = await getToken();
-      const res = await fetch("http://localhost:5000/api/judge0/submit", {
+      const res = await fetch(`${API_BASE_URL}/api/judge0/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

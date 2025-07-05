@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { API_BASE_URL } from "@/lib/api";
 
 type Course = {
   _id: string;
@@ -22,7 +23,7 @@ export default function ManageCoursesPage() {
     const fetchCourses = async () => {
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:5000/api/users/courses", {
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

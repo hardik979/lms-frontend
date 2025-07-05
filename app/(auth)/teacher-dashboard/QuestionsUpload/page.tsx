@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "react-toastify";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Course {
   _id: string;
@@ -54,7 +55,7 @@ export default function PracticeUploadPage(): JSX.Element {
     const fetchCourses = async () => {
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:5000/api/users/courses", {
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -238,24 +239,21 @@ export default function PracticeUploadPage(): JSX.Element {
         });
       }, 200);
 
-      const res = await fetch(
-        "http://localhost:5000/api/practice/create-question",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title,
-            description,
-            courseId,
-            difficulty,
-            examples: JSON.stringify(examples),
-            testCases: JSON.stringify(testCases),
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/practice/create-question`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          courseId,
+          difficulty,
+          examples: JSON.stringify(examples),
+          testCases: JSON.stringify(testCases),
+        }),
+      });
 
       clearInterval(progressInterval);
 

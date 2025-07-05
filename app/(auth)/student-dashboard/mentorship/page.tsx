@@ -6,7 +6,6 @@ import {
   IconUserCircle,
   IconIdBadge2,
 } from "@tabler/icons-react";
-import ComparisonChart from "@/components/ComparisonChart";
 
 const mentorshipData = [
   {
@@ -79,7 +78,7 @@ export default function MentorshipPage() {
 
         <div className="mt-12 text-center">
           <a
-            href="/book-mentorship"
+            href="/MentorshipForm"
             className="inline-block bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-md text-sm font-semibold transition"
           >
             Book Mentorship
@@ -120,9 +119,6 @@ export default function MentorshipPage() {
           </div>
         </div>
       </section>
-
-      {/* Reuse existing comparison chart as-is */}
-      <ComparisonChart />
     </>
   );
 }

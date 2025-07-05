@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { FiGithub } from "react-icons/fi";
+import { API_BASE_URL } from "@/lib/api";
 
 type Project = {
   _id: string;
@@ -32,12 +33,9 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     const fetchProject = async () => {
       const token = await getToken();
-      const res = await fetch(
-        `http://localhost:5000/api/projects/single/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/projects/single/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const data = await res.json();
       setProject(data.project);

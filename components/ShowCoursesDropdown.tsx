@@ -13,6 +13,7 @@ import {
 import { Course } from "@/types";
 import { useAuth } from "@clerk/nextjs";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function ShowCoursesDropdown() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -27,7 +28,7 @@ export default function ShowCoursesDropdown() {
     const fetchCourses = async () => {
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:5000/api/users/courses", {
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

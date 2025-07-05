@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import LoadingPage from "@/components/Loader";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Question {
   _id: string;
@@ -110,7 +111,7 @@ export default function TestPage() {
 
       // First, get the test info
       const response = await fetch(
-        `http://localhost:5000/api/tests/course/${courseId}/chapter/${chapterIndex}`,
+        `${API_BASE_URL}/api/tests/course/${courseId}/chapter/${chapterIndex}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -128,7 +129,7 @@ export default function TestPage() {
 
       // Start the test (this will always work now)
       const startResponse = await fetch(
-        `http://localhost:5000/api/tests/${data.test._id}/start`,
+        `${API_BASE_URL}/api/tests/${data.test._id}/start`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -165,7 +166,7 @@ export default function TestPage() {
       const currentQuestion = testData.questions[currentQuestionIndex];
 
       const response = await fetch(
-        `http://localhost:5000/api/tests/${testData.test._id}/submit-answer`,
+        `${API_BASE_URL}/api/tests/${testData.test._id}/submit-answer`,
         {
           method: "POST",
           headers: {
@@ -247,7 +248,7 @@ export default function TestPage() {
       );
 
       const response = await fetch(
-        `http://localhost:5000/api/tests/${testData.test._id}/complete`,
+        `${API_BASE_URL}/api/tests/${testData.test._id}/complete`,
         {
           method: "POST",
           headers: {

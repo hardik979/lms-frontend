@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Trash2, Save, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 
 type PracticeQuestion = {
   _id: string;
@@ -29,7 +30,7 @@ export default function PracticeEditor({ courseId }: { courseId: string }) {
       try {
         const token = await getToken();
         const res = await fetch(
-          `http://localhost:5000/api/practice?courseId=${courseId}`,
+          `${API_BASE_URL}/api/practice?courseId=${courseId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -53,7 +54,7 @@ export default function PracticeEditor({ courseId }: { courseId: string }) {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/practice/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/practice/${id}`, {
         method: "DELETE",
       });
 
@@ -81,7 +82,7 @@ export default function PracticeEditor({ courseId }: { courseId: string }) {
     try {
       const token = await getToken();
       const res = await fetch(
-        `http://localhost:5000/api/practice/update/${editingId}`,
+        `${API_BASE_URL}/api/practice/update/${editingId}`,
         {
           method: "PATCH",
           headers: {

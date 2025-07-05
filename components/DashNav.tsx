@@ -9,6 +9,7 @@ import { useUser } from "@clerk/nextjs";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
+import { API_BASE_URL } from "@/lib/api";
 
 // Types
 interface Course {
@@ -46,7 +47,7 @@ export default function DashNav({
       try {
         setIsLoading(true);
         const token = await getToken();
-        const response = await fetch("http://localhost:5000/api/courses/list", {
+        const response = await fetch(`${API_BASE_URL}/api/courses/list`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -149,12 +150,6 @@ export default function DashNav({
   };
 
   // Clear search
-  const clearSearch = () => {
-    setSearchQuery("");
-    setIsSearchFocused(false);
-    setSelectedIndex(-1);
-    inputRef.current?.focus();
-  };
 
   return (
     <header className="h-16 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50 shadow-xl fixed top-0 left-0 right-0 z-50 backdrop-blur-xl">
@@ -181,11 +176,11 @@ export default function DashNav({
               <div className="w-7 h-7 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-shadow">
                 <Sparkles size={14} className="text-white" />
               </div>
-              <span className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+              <span className="text-sm font-bold [font-family:var(--font-righteous)] ">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
                   IT
                 </span>{" "}
-                Jobs Factory
+                <span className="text-sky-400">Jobs Factory</span>
               </span>
             </div>
           </Link>
@@ -210,7 +205,7 @@ export default function DashNav({
               <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-200 group-hover:scale-105">
                 <Sparkles size={16} className="text-white" />
               </div>
-              <span className="text-xl font-bold text-white ">
+              <span className="text-xl font-bold text-cyan-400 [font-family:var(--font-righteous)]">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
                   IT
                 </span>{" "}
@@ -220,103 +215,13 @@ export default function DashNav({
           </div>
 
           {/* Center: Enhanced Search Bar and Courses Dropdown */}
-          <div className="flex-1 flex justify-center max-w-2xl mx-8">
-            <div className="flex items-center gap-4 w-full">
-              {/* Enhanced Search Bar with Dropdown */}
-              <div className="relative flex-1 max-w-md" ref={searchRef}>
-                <IconSearch
-                  size={18}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 z-10"
-                />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Search courses, projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-slate-600/50 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500/50 focus:bg-slate-700/50 transition-all duration-200"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors z-10"
-                  >
-                    <IconX size={16} />
-                  </button>
-                )}
-
-                {/* Search Results Dropdown */}
-                {isSearchFocused &&
-                  (searchQuery.trim() !== "" || isLoading) && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl max-h-80 overflow-y-auto z-20">
-                      {isLoading ? (
-                        <div className="p-4 text-center text-slate-400">
-                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400 mr-2"></div>
-                          Searching courses...
-                        </div>
-                      ) : filteredCourses.length > 0 ? (
-                        <div className="py-2">
-                          {filteredCourses.map((course, index) => (
-                            <button
-                              key={course._id}
-                              onClick={() => handleCourseSelect(course)}
-                              className={`w-full px-4 py-3 text-left hover:bg-slate-700/50 transition-colors duration-150 ${
-                                index === selectedIndex
-                                  ? "bg-slate-700/50 border-l-2 border-cyan-400"
-                                  : ""
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-slate-200 font-medium text-sm truncate">
-                                    {course.title}
-                                  </h4>
-                                  {course.description && (
-                                    <p className="text-slate-400 text-xs mt-1 line-clamp-2">
-                                      {course.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {course.instructor && (
-                                      <span className="text-xs text-slate-500">
-                                        by {course.instructor}
-                                      </span>
-                                    )}
-                                    {course.category && (
-                                      <span className="text-xs text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full">
-                                        {course.category}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      ) : searchQuery.trim() !== "" ? (
-                        <div className="p-4 text-center text-slate-400">
-                          <p className="text-sm">
-                            No courses found for "{searchQuery}"
-                          </p>
-                          <p className="text-xs mt-1">
-                            Try a different search term
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
+          <div className="flex-1 flex justify-center items-center max-w-2xl mx-8">
+            {/* Courses Dropdown for students only */}
+            {role === "student" && (
+              <div className="shrink-0">
+                <ShowCoursesDropdown />
               </div>
-
-              {/* Courses Dropdown for students only */}
-              {role === "student" && (
-                <div className="shrink-0">
-                  <ShowCoursesDropdown />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Right: Enhanced Action Items */}

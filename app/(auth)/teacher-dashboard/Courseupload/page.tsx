@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Plus, Trash2, Upload, Play, Video, TestTube } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 type VideoForm = {
   title: string;
   file: File | null;
@@ -129,23 +130,20 @@ export default function CreateCoursePage() {
       if (chapter.testQuestions.length > 0) {
         try {
           // Create test for this chapter
-          const testRes = await fetch(
-            "http://localhost:5000/api/tests/create-test",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                courseId,
-                chapterIndex,
-                title: chapter.testTitle || `${chapter.title} Test`,
-                description:
-                  chapter.testDescription || `Test for ${chapter.title}`,
-              }),
-            }
-          );
+          const testRes = await fetch(`${API_BASE_URL}/api/tests/create-test`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              courseId,
+              chapterIndex,
+              title: chapter.testTitle || `${chapter.title} Test`,
+              description:
+                chapter.testDescription || `Test for ${chapter.title}`,
+            }),
+          });
 
           if (testRes.ok) {
             const testData = await testRes.json();
@@ -153,17 +151,14 @@ export default function CreateCoursePage() {
 
             // Add questions to the test
             for (const question of chapter.testQuestions) {
-              await fetch(
-                `http://localhost:5000/api/tests/${testId}/questions`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify(question),
-                }
-              );
+              await fetch(`${API_BASE_URL}/api/tests/${testId}/questions`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(question),
+              });
             }
           }
         } catch (err) {
@@ -175,6 +170,48 @@ export default function CreateCoursePage() {
       }
     }
   };
+  const uploadFileToBunny = (
+    file: File,
+    uploadUrl: string,
+    onProgress: (progress: number) => void
+  ) => {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          onProgress(percent);
+        }
+      };
+
+      xhr.onload = () =>
+        xhr.status === 200 || xhr.status === 201
+          ? resolve()
+          : reject("Upload failed");
+      xhr.onerror = () => reject("Upload failed");
+      xhr.send(file);
+    });
+  };
+
+  const uploadVideosToBunny = async (newCourse: any) => {
+    for (let ci = 0; ci < chapters.length; ci++) {
+      const frontendChapter = chapters[ci];
+      const backendChapter = newCourse.chapters[ci];
+
+      for (let vi = 0; vi < frontendChapter.videos.length; vi++) {
+        const videoFile = frontendChapter.videos[vi].file;
+        const uploadUrl = backendChapter.videos[vi]?.uploadUrl;
+
+        if (videoFile && uploadUrl) {
+          await uploadFileToBunny(videoFile, uploadUrl, (progress) => {
+            setUploadProgress(50 + progress / 2); // Progress from 50% to 100%
+          });
+        }
+      }
+    }
+  };
 
   const handleSubmit = async () => {
     if (!title || !description || !thumbnail) {
@@ -182,7 +219,7 @@ export default function CreateCoursePage() {
       return;
     }
 
-    setStatus("Uploading course...");
+    setStatus("Creating course metadata...");
     setIsUploading(true);
     setUploadProgress(10);
 
@@ -200,42 +237,39 @@ export default function CreateCoursePage() {
       )
     );
 
-    chapters.forEach((chapter, ci) => {
-      chapter.videos.forEach((video, vi) => {
-        if (video.file) {
-          formData.append(`video-${ci}-${vi}`, video.file);
-        }
-      });
-    });
-
     const token = await getToken();
 
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/teacher/create-course",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      setUploadProgress(60);
+      const res = await fetch(`${API_BASE_URL}/api/teacher/create-course`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
       const result = await res.json();
-      if (res.ok) {
-        setStatus("Creating tests...");
-        await createTestsForCourse(result.course._id);
-        setUploadProgress(100);
 
-        showNotification("✅ Course and tests created successfully!");
-        resetForm();
-      } else {
+      if (!res.ok) {
         showNotification("❌ Failed: " + result.error);
+        setIsUploading(false);
+        return;
       }
+
+      const newCourse = result.course;
+
+      setUploadProgress(50);
+      setStatus("Uploading videos directly to Bunny...");
+
+      await uploadVideosToBunny(newCourse);
+
+      setUploadProgress(80);
+      setStatus("Creating tests...");
+      await createTestsForCourse(newCourse._id);
+
+      setUploadProgress(100);
+      showNotification("✅ Course and tests created successfully!");
+      resetForm();
     } catch (err) {
+      console.error(err);
       showNotification("❌ Server error. Please try again later.");
     } finally {
       setStatus("");
