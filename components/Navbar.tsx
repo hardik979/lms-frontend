@@ -282,7 +282,12 @@ export default function Navbar() {
                       >
                         Contact Us
                       </a>
-                      <Link href={"/redirect"}>Sign In</Link>
+                      <Link
+                        href={"/redirect"}
+                        className="block p-3 rounded-lg text-white hover:bg-gray-800 transition-colors"
+                      >
+                        Sign In
+                      </Link>
                     </motion.div>
                     <motion.div
                       variants={menuItemVariants}
