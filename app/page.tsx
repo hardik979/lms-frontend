@@ -204,7 +204,7 @@ export default function Page() {
             <div className="lg:col-span-2 rounded-xl overflow-hidden shadow-2xl mt-4 bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 order-2 max-w-md mx-auto lg:mx-0 w-full">
               <div className="h-32 sm:h-40 lg:h-48 xl:h-56 relative overflow-hidden">
                 <Image
-                  src="/code3.png"
+                  src="/code3.PNG"
                   alt="Hero Image"
                   fill // ✅ this tells Next.js to stretch image to fill parent
                   className="object-cover object-center"
