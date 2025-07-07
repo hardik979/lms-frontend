@@ -450,7 +450,7 @@ export default function TestPage() {
         backgroundSize: "20px 20px",
       }}
     >
-      <nav className="sticky top-0 z-50 bg-cyan-950 font-bold text-xl border-b border-white text-white font-sans md:px-10 h-14 flex items-center">
+      <nav className="sticky top-0 z-50 bg-cyan-950 [font-family:var(--font-righteous)] font-bold text-xl border-b border-white text-sky-400  md:px-10 h-14 flex items-center">
         <span className="text-xl font-bold text-yellow-400 mr-1.5">IT </span>
         JOBS FACTORY
       </nav>

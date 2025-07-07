@@ -1,5 +1,5 @@
 "use client";
-import { IconMenu2, IconBell, IconSearch, IconX } from "@tabler/icons-react";
+import { IconMenu2, IconBell } from "@tabler/icons-react";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import ShowCoursesDropdown from "./ShowCoursesDropdown";
 import Link from "next/link";

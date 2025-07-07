@@ -2,7 +2,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   IconHome,
   IconBook,
@@ -17,7 +17,8 @@ import {
 } from "@tabler/icons-react";
 import { Projector, TrophyIcon } from "lucide-react";
 import { useActiveCourseId } from "@/lib/hooks/useDefaultCourse";
-
+import { API_BASE_URL } from "@/lib/api";
+import { useAuth } from "@clerk/nextjs";
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +29,24 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   const pathname = usePathname();
   const [selectedCourse, setSelectedCourse] = useState("Masters in CS");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const { getToken } = useAuth();
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setCourses(data.courses || []);
+        setSelectedCourse(data.courses?.[0]?.title || ""); // optional: auto-select first course
+      } catch (err) {
+        console.error("Failed to load courses:", err);
+      }
+    };
+    fetchCourses();
+  }, [getToken]);
 
   const activeCourseId = useActiveCourseId();
   const courseOptions = [
@@ -60,7 +79,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
     {
       label: "Practice",
       icon: <IconTargetArrow size={20} />,
-      href: "/student-dashboard/practise",
+      href: "/student-dashboard/daily-quiz",
       description: "Quiz & Assignments",
     },
     {
@@ -97,10 +116,10 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       description: "Create new courses",
     },
     {
-      label: "Upload Chapter's Tests ",
+      label: "Upload Daily Quiz ",
       icon: <IconTargetArrow size={20} />,
-      href: "/teacher-dashboard/chapter-testQuestionsUpload",
-      description: "Create new courses",
+      href: "/teacher-dashboard/daily-quizUpload",
+      description: "Create daily Quizes",
     },
     {
       label: "Upload Practice",
@@ -175,7 +194,9 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition-all duration-200 group"
               >
-                <span className="font-medium">{selectedCourse}</span>
+                <span className="font-medium truncate">
+                  {selectedCourse || "Select course"}
+                </span>
                 <IconChevronDown
                   size={16}
                   className={clsx(
@@ -186,24 +207,33 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-10 overflow-hidden">
-                  {courseOptions.map((course) => (
-                    <button
-                      key={course}
-                      onClick={() => {
-                        setSelectedCourse(course);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={clsx(
-                        "w-full text-left px-4 py-3 hover:bg-slate-700 transition-colors duration-150",
-                        course === selectedCourse
-                          ? "text-cyan-300 bg-slate-700/50"
-                          : "text-slate-300"
-                      )}
-                    >
-                      {course}
-                    </button>
-                  ))}
+                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-10 overflow-hidden max-h-80 overflow-y-auto">
+                  {courses.length > 0 ? (
+                    courses.map((course) => (
+                      <button
+                        key={course._id}
+                        onClick={() => {
+                          setSelectedCourse(course.title);
+                          setIsDropdownOpen(false);
+                          // Optionally navigate or set active course ID here:
+                          // setCourseId(course._id);
+                          // router.push(`/student-dashboard/course?id=${course._id}`);
+                        }}
+                        className={clsx(
+                          "w-full text-left px-4 py-3 hover:bg-slate-700 transition-colors duration-150",
+                          course.title === selectedCourse
+                            ? "text-cyan-300 bg-slate-700/50"
+                            : "text-slate-300"
+                        )}
+                      >
+                        {course.title}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-slate-400 text-sm">
+                      No courses found
+                    </div>
+                  )}
                 </div>
               )}
             </div>
