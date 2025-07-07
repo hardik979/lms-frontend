@@ -7,7 +7,7 @@ export default function LoadingPage() {
     <div className="h-screen  bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex  flex-col justify-center items-center px-4">
       <div className="w-64 h-64">
         <DotLottieReact
-          src="https://lottie.host/e88ec521-f92c-4a91-9932-81f5e8e2e481/jbCNOIHfLK.lottie"
+          src="https://lottie.host/6d42cfa9-89ad-4001-a4fb-0822238226f4/UK9Y1BDXTm.lottie"
           loop
           autoplay
         />
