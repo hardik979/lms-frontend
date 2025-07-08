@@ -122,6 +122,12 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       description: "Create daily Quizes",
     },
     {
+      label: "Upload Live Class Link ",
+      icon: <IconTargetArrow size={20} />,
+      href: "/teacher-dashboard/live-class-schedule",
+      description: "Upload link of live class",
+    },
+    {
       label: "Upload Practice",
       icon: <IconBook size={20} />,
       href: "/teacher-dashboard/QuestionsUpload",

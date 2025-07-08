@@ -23,6 +23,7 @@ export default function StudentDashboardLayout({
       />
       <div className="flex-1 overflow-y-auto max-h-screen">
         <DashNav toggleSidebar={() => setSidebarOpen(true)} />
+
         <main className={`mt-16 p-4 ${montserrat.className}`}>{children}</main>
       </div>
     </div>

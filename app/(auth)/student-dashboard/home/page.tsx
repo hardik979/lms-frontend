@@ -21,10 +21,10 @@ import Link from "next/link";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
 import LoadingPage from "@/components/Loader";
 import { API_BASE_URL } from "@/lib/api";
-
+import { useUser } from "@clerk/nextjs";
 const Home = () => {
   const { getToken, isSignedIn } = useAuth();
-
+  const { user } = useUser();
   // Use both courseId and setCourseId from Zustand store
   const selectedCourseId = useSelectedCourseStore((s) => s.courseId);
   const setCourseId = useSelectedCourseStore((s) => s.setCourseId);
@@ -135,6 +135,7 @@ const Home = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+                      {user?.fullName ? `Hii, ${user.fullName}` : "Hey"}{" "}
                       Complete your application for{" "}
                       <span className="text-cyan-400">
                         {selectedCourse.title}
@@ -211,7 +212,7 @@ const Home = () => {
                   🎉
                 </motion.div>
                 <h2 className="text-2xl md:text-3xl font-bold text-green-400 mb-4">
-                  You're All Set!
+                  {user?.fullName ? `Hii ${user.fullName}` : "Hey, Welcome"}
                 </h2>
                 <p className="text-green-100 text-lg mb-6">
                   You have already Enrolled in{" "}
