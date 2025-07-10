@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
 import { API_BASE_URL } from "@/lib/api";
+import Image from "next/image";
 
 // Types
 interface Course {
@@ -173,9 +174,15 @@ export default function DashNav({
             className="absolute left-1/2 transform -translate-x-1/2 group"
           >
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-shadow">
-                <Sparkles size={14} className="text-white" />
+              <div className="w-8 h-8 relative rounded-md overflow-hidden shadow-lg">
+                <Image
+                  src={"/logo.png"}
+                  alt="Company Logo"
+                  fill
+                  className="object-cover"
+                />
               </div>
+
               <span className="text-sm font-bold [font-family:var(--font-righteous)] ">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
                   IT
@@ -202,9 +209,15 @@ export default function DashNav({
           {/* Left: Enhanced Logo and Role Indicator */}
           <div className="flex items-center gap-6">
             <Link href={"/"} className="group flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-cyan-400/25 transition-all duration-200 group-hover:scale-105">
-                <Sparkles size={16} className="text-white" />
+              <div className="w-8 h-8 relative rounded-sm overflow-hidden shadow-lg group-hover:scale-105 transition-all duration-200">
+                <Image
+                  src={"/logo.png"}
+                  alt="Company Logo"
+                  fill
+                  className="object-cover"
+                />
               </div>
+
               <span className="text-xl font-bold text-cyan-400 [font-family:var(--font-righteous)]">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
                   IT

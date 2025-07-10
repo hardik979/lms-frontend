@@ -15,7 +15,13 @@ type JobItem = {
 };
 
 const jobTypes = ["Remote", "Onsite", "Hybrid"];
-const domains = ["Data Science", "Web Development", "AI", "Analytics"];
+const domains = [
+  "Data Science",
+  "Web Development",
+  "AI",
+  "Analytics",
+  "Production support",
+];
 
 export default function JobBoardPage() {
   const [location, setLocation] = useState("");
@@ -26,7 +32,7 @@ export default function JobBoardPage() {
   const lastQueryRef = useRef<string>("");
 
   const buildQuery = () => {
-    let base = "Data Analyst";
+    let base = "production support";
     if (selectedJobType) base += ` ${selectedJobType}`;
     if (selectedDomain) base += ` ${selectedDomain}`;
     if (location.trim()) base += ` in ${location.trim()}`;
