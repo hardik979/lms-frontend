@@ -6,17 +6,12 @@ import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
-  Pencil,
   XCircle,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Award,
   BookOpen,
   ArrowLeft,
   ArrowRight,
   CheckSquare,
-  Circle,
   BarChart3,
   Target,
 } from "lucide-react";
@@ -54,12 +49,21 @@ export default function DailyQuizPage() {
       setIsLoading(true);
       try {
         const token = await getToken();
-        const res = await fetch(`${API_BASE_URL}/daily-quiz/today`, {
+        const res = await fetch(`${API_BASE_URL}/api/daily-quiz/today`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
-          setQuiz(data.quiz);
+          if (data.alreadyAttempted) {
+            toast.info("📝 You have already submitted today's quiz.");
+            setResult({
+              score: 0,
+              totalQuestions: data.quiz.questions.length,
+              percentage: 0,
+            }); // Optional: force show result component or handle differently
+          } else {
+            setQuiz(data.quiz);
+          }
         } else {
           toast.error("❌ No daily quiz found for today");
         }
@@ -93,7 +97,7 @@ export default function DailyQuizPage() {
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/daily-quiz/${quiz?._id}/submit`,
+        `${API_BASE_URL}/api/daily-quiz/${quiz?._id}/submit`,
         {
           method: "POST",
           headers: {

@@ -1,166 +1,592 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "react-toastify";
-import { motion } from "framer-motion";
-import { Calendar, Video, ArrowDownRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  Video,
+  BookOpen,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Play,
+  ArrowRight,
+  Link2,
+  MessageSquare,
+  FileText,
+} from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
-export default function LiveClassSchedulerPage() {
+// Type definitions
+interface Course {
+  _id: string;
+  title: string;
+  students?: number;
+}
+
+interface FormData {
+  title: string;
+  description: string;
+  courseId: string;
+  meetLink: string;
+  scheduledAt: string;
+}
+
+interface CustomCalendarProps {
+  selectedDateTime: string;
+  onDateTimeSelect: (dateTime: string) => void;
+  onClose: () => void;
+}
+
+// Custom Calendar Component
+const CustomCalendar: React.FC<CustomCalendarProps> = ({
+  selectedDateTime,
+  onDateTimeSelect,
+  onClose,
+}) => {
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    selectedDateTime ? new Date(selectedDateTime) : new Date()
+  );
+
+  const months: string[] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const getDaysInMonth = (date: Date): number => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date): number => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const formatDate = (year: number, month: number, day: number): string => {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+  };
+
+  const isToday = (year: number, month: number, day: number): boolean => {
+    const today = new Date();
+    return (
+      year === today.getFullYear() &&
+      month === today.getMonth() &&
+      day === today.getDate()
+    );
+  };
+
+  const isSelected = (year: number, month: number, day: number): boolean => {
+    if (!selectedDateTime) return false;
+    const dateStr = formatDate(year, month, day);
+    return selectedDateTime.startsWith(dateStr);
+  };
+
+  const isPastDate = (year: number, month: number, day: number): boolean => {
+    const today = new Date();
+    const checkDate = new Date(year, month, day);
+    today.setHours(0, 0, 0, 0);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate < today;
+  };
+
+  const renderCalendar = (): JSX.Element[] => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const days: JSX.Element[] = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10" />);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const dateStr = formatDate(year, month, day);
+      const isPast = isPastDate(year, month, day);
+
+      days.push(
+        <motion.button
+          key={day}
+          whileHover={!isPast ? { scale: 1.05 } : {}}
+          whileTap={!isPast ? { scale: 0.95 } : {}}
+          onClick={() => {
+            if (!isPast) {
+              // If there's already a time selected, preserve it
+              const existingTime = selectedDateTime
+                ? selectedDateTime.split("T")[1]
+                : "09:00";
+              onDateTimeSelect(`${dateStr}T${existingTime}`);
+              onClose();
+            }
+          }}
+          disabled={isPast}
+          className={`
+            h-10 w-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all
+            ${
+              isSelected(year, month, day)
+                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg scale-105"
+                : isToday(year, month, day)
+                ? "bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 shadow-sm"
+                : isPast
+                ? "text-gray-500 cursor-not-allowed opacity-50"
+                : "text-cyan-200 hover:bg-cyan-700/30 hover:text-white cursor-pointer hover:shadow-md"
+            }
+          `}
+        >
+          {day}
+        </motion.button>
+      );
+    }
+
+    return days;
+  };
+
+  const navigateMonth = (direction: number): void => {
+    setCurrentMonth((prev) => {
+      const newMonth = new Date(prev);
+      newMonth.setMonth(prev.getMonth() + direction);
+      return newMonth;
+    });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      className="absolute top-full left-0 mt-2 bg-slate-800/95 backdrop-blur-sm border border-cyan-600/50 rounded-2xl p-6 shadow-2xl z-50 min-w-[350px]"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => navigateMonth(-1)}
+          className="p-2 hover:bg-cyan-700/30 rounded-xl transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 text-cyan-300" />
+        </button>
+        <h3 className="text-cyan-200 font-semibold text-lg">
+          {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+        </h3>
+        <button
+          onClick={() => navigateMonth(1)}
+          className="p-2 hover:bg-cyan-700/30 rounded-xl transition-colors"
+        >
+          <ChevronRight className="w-5 h-5 text-cyan-300" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+          <div
+            key={day}
+            className="h-8 flex items-center justify-center text-xs font-medium text-cyan-400"
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+
+      <div className="mt-4 pt-3 border-t border-cyan-700/30">
+        <p className="text-xs text-cyan-400/70 text-center">
+          Past dates are disabled
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+const LiveClassSchedulerPage: React.FC = () => {
   const { getToken } = useAuth();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormData>({
     title: "",
     description: "",
     courseId: "",
     meetLink: "",
     scheduledAt: "",
   });
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Close calendar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target as Node)
+      ) {
+        setShowCalendar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      const token = await getToken();
-      const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      setCourses(data.courses || []);
+    const fetchCourses = async (): Promise<void> => {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE_URL}/api/users/courses`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setCourses(data.courses || []);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+        toast.error("Failed to load courses");
+      }
     };
     fetchCourses();
   }, [getToken]);
 
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ): void => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    // Update selected course when courseId changes
+    if (name === "courseId") {
+      const course = courses.find((c) => c._id === value);
+      setSelectedCourse(course || null);
+    }
   };
 
-  const handleSubmit = async () => {
+  const handleDateTimeSelect = (dateTime: string): void => {
+    setForm({ ...form, scheduledAt: dateTime });
+  };
+
+  const handleSubmit = async (): Promise<void> => {
     if (!form.courseId) {
       toast.error("❌ Please select a course");
       return;
     }
 
-    setLoading(true);
-    const token = await getToken();
-    const res = await fetch(`${API_BASE_URL}/api/teacher/live-class`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    if (!form.title.trim()) {
+      toast.error("❌ Please enter a class title");
+      return;
+    }
 
-    setLoading(false);
-    if (res.ok) {
-      toast.success("✅ Live class scheduled successfully");
-      setForm({
-        title: "",
-        description: "",
-        courseId: "",
-        meetLink: "",
-        scheduledAt: "",
+    if (!form.scheduledAt) {
+      toast.error("❌ Please select date and time");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}/api/teacher/live-class`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
       });
-    } else {
+
+      if (res.ok) {
+        toast.success("✅ Live class scheduled successfully");
+        setForm({
+          title: "",
+          description: "",
+          courseId: "",
+          meetLink: "",
+          scheduledAt: "",
+        });
+        setSelectedCourse(null);
+      } else {
+        toast.error("❌ Failed to schedule class");
+      }
+    } catch (error) {
+      console.error("Error scheduling class:", error);
       toast.error("❌ Failed to schedule class");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const formatDisplayDateTime = (dateTimeStr: string): string => {
+    if (!dateTimeStr) return "";
+    const date = new Date(dateTimeStr);
+    return (
+      date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }) +
+      " at " +
+      date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 p-6 rounded-2xl">
-      <motion.div className="max-w-2xl mx-auto space-y-6">
-        <div className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 p-6">
+      <motion.div
+        className="max-w-4xl mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Header */}
+        <motion.div variants={itemVariants} className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl backdrop-blur-sm border border-cyan-400/30">
+              <Video className="w-8 h-8 text-cyan-300" />
+            </div>
+          </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent mb-2">
             Schedule Live Class
           </h1>
-          <p className="text-cyan-200/80 text-lg">
-            Enter details to schedule a session
-            <ArrowDownRight className="w-5 h-5 inline text-cyan-200/80 ml-2" />
-          </p>
-        </div>
+        </motion.div>
 
-        <div className="space-y-4 bg-cyan-900/30 border border-cyan-700/50 rounded-2xl p-6">
-          <div>
-            <label className="block text-cyan-200 font-medium mb-1">
-              Title
-            </label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              placeholder="Class title"
-              className="w-full bg-cyan-900/20 border border-cyan-600/50 rounded-xl px-4 py-3 text-white"
-            />
+        {/* Main Form */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-gradient-to-br from-cyan-900/30 to-blue-900/20 backdrop-blur-sm border border-cyan-700/50 rounded-2xl p-8 shadow-2xl"
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl">
+              <Play className="w-6 h-6 text-cyan-300" />
+            </div>
+            <h2 className="text-2xl font-semibold text-white">Class Details</h2>
           </div>
 
-          <div>
-            <label className="block text-cyan-200 font-medium mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="What's this class about?"
-              className="w-full bg-cyan-900/20 border border-cyan-600/50 rounded-xl px-4 py-3 text-white resize-none"
-            />
+          <div className="space-y-6">
+            {/* Course Selection */}
+            <div>
+              <label className="block text-cyan-200 font-medium mb-3">
+                <BookOpen className="w-4 h-4 inline mr-2" />
+                Select Course
+              </label>
+              <div className="relative">
+                <select
+                  name="courseId"
+                  value={form.courseId}
+                  onChange={handleChange}
+                  className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all appearance-none"
+                >
+                  <option value="">-- Choose a course --</option>
+                  {courses.map((course) => (
+                    <option key={course._id} value={course._id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronRight className="w-5 h-5 text-cyan-400 absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Class Title */}
+            <div>
+              <label className="block text-cyan-200 font-medium mb-3">
+                <FileText className="w-4 h-4 inline mr-2" />
+                Class Title
+              </label>
+              <input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter an engaging class title..."
+                className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all placeholder-cyan-300/60"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-cyan-200 font-medium mb-3">
+                <MessageSquare className="w-4 h-4 inline mr-2" />
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="What will students learn in this session?"
+                className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none placeholder-cyan-300/60"
+                rows={3}
+              />
+            </div>
+
+            {/* Date & Time */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-cyan-200 font-medium mb-3">
+                  <CalendarDays className="w-4 h-4 inline mr-2" />
+                  Date & Time
+                </label>
+                <div className="relative" ref={calendarRef}>
+                  <button
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all text-left flex items-center justify-between hover:bg-cyan-900/40"
+                  >
+                    <span
+                      className={
+                        form.scheduledAt ? "text-white" : "text-cyan-300/60"
+                      }
+                    >
+                      {form.scheduledAt
+                        ? formatDisplayDateTime(form.scheduledAt)
+                        : "Select date and time"}
+                    </span>
+                    <Calendar className="w-5 h-5 text-cyan-400" />
+                  </button>
+
+                  <AnimatePresence>
+                    {showCalendar && (
+                      <CustomCalendar
+                        selectedDateTime={form.scheduledAt}
+                        onDateTimeSelect={handleDateTimeSelect}
+                        onClose={() => setShowCalendar(false)}
+                      />
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-cyan-200 font-medium mb-3">
+                  <Clock className="w-4 h-4 inline mr-2" />
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={form.scheduledAt ? form.scheduledAt.split("T")[1] : ""}
+                  onChange={(e) => {
+                    const date = form.scheduledAt
+                      ? form.scheduledAt.split("T")[0]
+                      : new Date().toISOString().split("T")[0];
+                    setForm({
+                      ...form,
+                      scheduledAt: `${date}T${e.target.value}`,
+                    });
+                  }}
+                  className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Meet Link */}
+            <div>
+              <label className="block text-cyan-200 font-medium mb-3">
+                <Link2 className="w-4 h-4 inline mr-2" />
+                Google Meet Link
+              </label>
+              <input
+                name="meetLink"
+                value={form.meetLink}
+                onChange={handleChange}
+                placeholder="https://meet.google.com/xyz-abc-def"
+                className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all placeholder-cyan-300/60"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-cyan-200 font-medium mb-1">
-              Select Course
-            </label>
-            <select
-              name="courseId"
-              value={form.courseId}
-              onChange={handleChange}
-              className="w-full bg-cyan-900/20 border border-cyan-600/50 rounded-xl px-4 py-3 text-white"
+          {/* Submit Button */}
+          <div className="mt-8 pt-6 border-t border-cyan-700/30">
+            <motion.button
+              onClick={handleSubmit}
+              disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-8 py-4 rounded-2xl shadow-lg transition-all transform disabled:hover:scale-100 flex items-center justify-center gap-3"
             >
-              <option value="">-- Choose a course --</option>
-              {courses.map((course) => (
-                <option key={course._id} value={course._id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Scheduling Class...
+                </>
+              ) : (
+                <>
+                  Schedule Live Class
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </motion.button>
           </div>
+        </motion.div>
 
-          <div>
-            <label className="block text-cyan-200 font-medium mb-1">
-              Google Meet Link
-            </label>
-            <input
-              name="meetLink"
-              value={form.meetLink}
-              onChange={handleChange}
-              placeholder="https://meet.google.com/xyz"
-              className="w-full bg-cyan-900/20 border border-cyan-600/50 rounded-xl px-4 py-3 text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-cyan-200 font-medium mb-1">
-              Scheduled At
-            </label>
-            <input
-              type="datetime-local"
-              name="scheduledAt"
-              value={form.scheduledAt}
-              onChange={handleChange}
-              className="w-full bg-cyan-900/20 border border-cyan-600/50 rounded-xl px-4 py-3 text-white"
-            />
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium px-6 py-3 rounded-xl w-full"
-          >
-            {loading ? "Scheduling..." : "Schedule Class"}
-          </button>
-        </div>
+        {/* Loading Overlay */}
+        <AnimatePresence>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-gradient-to-br from-cyan-900 to-blue-900 border border-cyan-600/50 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Video className="w-8 h-8 text-cyan-400 animate-pulse" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-white mb-2">
+                    Scheduling Your Class
+                  </h3>
+                  <p className="text-cyan-200/70 mb-6">
+                    Please wait while we set up your live session...
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
-}
+};
+
+export default LiveClassSchedulerPage;

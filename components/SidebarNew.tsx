@@ -49,19 +49,13 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   }, [getToken]);
 
   const activeCourseId = useActiveCourseId();
-  const courseOptions = [
-    "Masters in CS",
-    "Full Stack Developer",
-    "Data Analytics",
-    "Machine Learning",
-    "DevOps Engineering",
-  ];
+
   const studentLinks = [
     {
       label: "Home",
       icon: <IconHome size={20} />,
       href: "/student-dashboard/home",
-      description: "Dashboard overview",
+      description: "Course overview",
     },
     {
       label: "Classroom",
@@ -94,12 +88,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       href: "/student-dashboard/mentorship",
       description: "Get guidance",
     },
-    {
-      label: "Leaderboard",
-      icon: <TrophyIcon size={20} />,
-      href: "/student-dashboard/Leaderboard",
-      description: "Track progress",
-    },
+
     {
       label: "Jobs",
       icon: <IconBriefcase size={20} />,
@@ -109,12 +98,6 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
   ];
 
   const teacherLinks = [
-    {
-      label: "Upload Course",
-      icon: <IconTargetArrow size={20} />,
-      href: "/teacher-dashboard/Courseupload",
-      description: "Create new courses",
-    },
     {
       label: "Upload Daily Quiz ",
       icon: <IconTargetArrow size={20} />,
@@ -127,12 +110,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       href: "/teacher-dashboard/live-class-schedule",
       description: "Upload link of live class",
     },
-    {
-      label: "Upload Practice",
-      icon: <IconBook size={20} />,
-      href: "/teacher-dashboard/QuestionsUpload",
-      description: "Add practice questions",
-    },
+
     {
       label: "Upload Projects",
       icon: <Projector size={20} />,

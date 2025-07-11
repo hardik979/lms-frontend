@@ -340,7 +340,7 @@ const UploadDailyQuizPage: React.FC = () => {
     try {
       const token = await getToken();
 
-      const quizRes = await fetch(`${API_BASE_URL}/daily-quiz/create`, {
+      const quizRes = await fetch(`${API_BASE_URL}/api/daily-quiz/create`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -364,7 +364,7 @@ const UploadDailyQuizPage: React.FC = () => {
         for (let i = 0; i < questions.length; i++) {
           const q = questions[i];
           const res = await fetch(
-            `${API_BASE_URL}/daily-quiz/${quizId}/questions`,
+            `${API_BASE_URL}/api/daily-quiz/${quizId}/questions`,
             {
               method: "POST",
               headers: {

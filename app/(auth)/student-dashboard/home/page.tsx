@@ -171,19 +171,22 @@ const Home = () => {
                       className="absolute h-full bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
                     />
                   </div>
-
-                  <div className="grid grid-cols-5 gap-2 text-xs text-cyan-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs text-cyan-200">
                     {progressSteps.map((step, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 + index * 0.1 }}
-                        className="text-center"
+                        className="text-center break-words"
                       >
-                        <div className="font-medium">{step.title}</div>
+                        <div className="font-medium leading-snug">
+                          {step.title}
+                        </div>
                         {step.subtitle && (
-                          <div className="opacity-75">{step.subtitle}</div>
+                          <div className="opacity-75 text-[11px]">
+                            {step.subtitle}
+                          </div>
                         )}
                       </motion.div>
                     ))}
