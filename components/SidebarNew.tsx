@@ -88,13 +88,6 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       href: "/student-dashboard/mentorship",
       description: "Get guidance",
     },
-
-    {
-      label: "Jobs",
-      icon: <IconBriefcase size={20} />,
-      href: "/student-dashboard/Jobs",
-      description: "Career opportunities",
-    },
   ];
 
   const teacherLinks = [
