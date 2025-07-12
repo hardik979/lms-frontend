@@ -15,7 +15,7 @@ import {
   IconX,
   IconChevronDown,
 } from "@tabler/icons-react";
-import { Projector, TrophyIcon } from "lucide-react";
+import { Projector } from "lucide-react";
 import { useActiveCourseId } from "@/lib/hooks/useDefaultCourse";
 import { API_BASE_URL } from "@/lib/api";
 import { useAuth } from "@clerk/nextjs";
@@ -115,6 +115,12 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
       icon: <IconChalkboardTeacher size={20} />,
       href: "/teacher-dashboard/manageCourse",
       description: "Edit and organize",
+    },
+    {
+      label: "Quiz Results",
+      icon: <IconMessage size={20} />,
+      href: "/teacher-dashboard/Quiz-Result-Page",
+      description: "Get The Daily Quiz Results",
     },
   ];
   const links = role === "teacher" ? teacherLinks : studentLinks;
