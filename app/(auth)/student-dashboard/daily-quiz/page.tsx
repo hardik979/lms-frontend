@@ -20,9 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { useAuth } from "@clerk/nextjs";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+import { API_BASE_URL } from "@/lib/api";
 
 interface QuizData {
   _id: string;
