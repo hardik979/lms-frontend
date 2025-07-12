@@ -286,7 +286,7 @@ export default function Sidebar({ isOpen, onClose, role }: SidebarProps) {
         </nav>
 
         {/* Enhanced footer */}
-        <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30">
+        <div className="px-6 py-2 border-t border-slate-700/50 bg-slate-800/30">
           <div className="text-xs text-slate-400 text-center">
             <p className="font-medium">© IT Jobs Factory</p>
             <p className="mt-1">Empowering your tech career</p>
