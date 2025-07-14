@@ -6,23 +6,65 @@ import { toast } from "react-toastify";
 import { API_BASE_URL } from "@/lib/api";
 import { Upload, Plus, X } from "lucide-react";
 
+// Define a type-safe enum for questionType
+type QuestionTypeEnum = "text" | "mcq";
+
+type Question = {
+  question: string;
+  questionType: QuestionTypeEnum;
+  options: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+};
+
 export default function UploadDailyQuizPage() {
   const { getToken } = useAuth();
   const [date, setDate] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [difficultyLevel, setDifficultyLevel] = useState("easy");
-  const [questions, setQuestions] = useState([{ question: "" }]);
+  const [questions, setQuestions] = useState<Question[]>([
+    {
+      question: "",
+      questionType: "text",
+      options: { A: "", B: "", C: "", D: "" },
+    },
+  ]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleQuestionChange = (index: number, value: string) => {
+  const handleQuestionChange = (
+    index: number,
+    key: "question" | "questionType",
+    value: string
+  ) => {
     const updated = [...questions];
-    updated[index].question = value;
+    if (key === "questionType" && value !== "text" && value !== "mcq") return;
+    updated[index][key] = value as any;
+    setQuestions(updated);
+  };
+
+  const handleOptionChange = (
+    index: number,
+    optionKey: keyof Question["options"],
+    value: string
+  ) => {
+    const updated = [...questions];
+    updated[index].options[optionKey] = value;
     setQuestions(updated);
   };
 
   const addQuestion = () => {
-    setQuestions([...questions, { question: "" }]);
+    setQuestions([
+      ...questions,
+      {
+        question: "",
+        questionType: "text",
+        options: { A: "", B: "", C: "", D: "" },
+      },
+    ]);
   };
 
   const removeQuestion = (index: number) => {
@@ -31,21 +73,29 @@ export default function UploadDailyQuizPage() {
   };
 
   const handleSubmit = async () => {
-    if (
-      !date ||
-      !title ||
-      !difficultyLevel ||
-      questions.some((q) => !q.question)
-    ) {
-      toast.error("All fields and questions are required");
+    if (!date || !title || !difficultyLevel) {
+      toast.error("All quiz fields are required");
       return;
+    }
+
+    for (const q of questions) {
+      if (!q.question) {
+        toast.error("Each question must have text");
+        return;
+      }
+      if (q.questionType === "mcq") {
+        const { A, B, C, D } = q.options;
+        if (!A || !B || !C || !D) {
+          toast.error("MCQ options A–D are required");
+          return;
+        }
+      }
     }
 
     setIsUploading(true);
     try {
       const token = await getToken();
 
-      // Create quiz metadata
       const quizRes = await fetch(`${API_BASE_URL}/api/daily-quiz/create`, {
         method: "POST",
         headers: {
@@ -64,7 +114,6 @@ export default function UploadDailyQuizPage() {
 
       const quizId = quizData.quiz._id;
 
-      // Add questions one by one
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         const res = await fetch(
@@ -75,7 +124,11 @@ export default function UploadDailyQuizPage() {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ question: q.question }),
+            body: JSON.stringify({
+              question: q.question,
+              questionType: q.questionType,
+              options: q.questionType === "mcq" ? q.options : undefined,
+            }),
           }
         );
 
@@ -87,7 +140,13 @@ export default function UploadDailyQuizPage() {
       setDescription("");
       setDate("");
       setDifficultyLevel("easy");
-      setQuestions([{ question: "" }]);
+      setQuestions([
+        {
+          question: "",
+          questionType: "text",
+          options: { A: "", B: "", C: "", D: "" },
+        },
+      ]);
     } catch (err) {
       console.error(err);
       toast.error("❌ Server error");
@@ -144,10 +203,44 @@ export default function UploadDailyQuizPage() {
             <label className="block mb-2">Question {i + 1}</label>
             <textarea
               value={q.question}
-              onChange={(e) => handleQuestionChange(i, e.target.value)}
-              className="w-full p-2 rounded bg-slate-900 border border-slate-600"
+              onChange={(e) =>
+                handleQuestionChange(i, "question", e.target.value)
+              }
+              className="w-full p-2 rounded bg-slate-900 border border-slate-600 mb-2"
               placeholder="Enter question text"
             />
+
+            <label className="block mb-2">Question Type</label>
+            <select
+              value={q.questionType}
+              onChange={(e) =>
+                handleQuestionChange(
+                  i,
+                  "questionType",
+                  e.target.value as QuestionTypeEnum
+                )
+              }
+              className="w-full p-2 rounded bg-slate-900 border border-slate-600 mb-2"
+            >
+              <option value="text">Text Answer</option>
+              <option value="mcq">MCQ</option>
+            </select>
+
+            {q.questionType === "mcq" && (
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                {(["A", "B", "C", "D"] as const).map((opt) => (
+                  <input
+                    key={opt}
+                    type="text"
+                    value={q.options[opt]}
+                    onChange={(e) => handleOptionChange(i, opt, e.target.value)}
+                    placeholder={`Option ${opt}`}
+                    className="p-2 rounded bg-slate-900 border border-slate-600"
+                  />
+                ))}
+              </div>
+            )}
+
             {questions.length > 1 && (
               <button
                 className="text-red-400 mt-2 flex items-center"

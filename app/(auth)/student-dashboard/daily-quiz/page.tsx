@@ -22,14 +22,23 @@ import { toast } from "react-toastify";
 import { useAuth } from "@clerk/nextjs";
 import { API_BASE_URL } from "@/lib/api";
 
+interface Question {
+  _id: string;
+  question: string;
+  questionType: "text" | "mcq";
+  options?: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+}
+
 interface QuizData {
   _id: string;
   title: string;
   description: string;
-  questions: {
-    _id: string;
-    question: string;
-  }[];
+  questions: Question[];
   totalQuestions: number;
   alreadyAttempted: boolean;
 }
@@ -51,7 +60,6 @@ const difficultyConfig = {
     textColor: "text-green-300",
     title: "Easy",
     description: "Perfect for beginners",
-    points: "10 Points",
   },
   medium: {
     icon: Zap,
@@ -61,7 +69,6 @@ const difficultyConfig = {
     textColor: "text-yellow-300",
     title: "Medium",
     description: "Challenge yourself",
-    points: "20 Points",
   },
   hard: {
     icon: Flame,
@@ -71,7 +78,6 @@ const difficultyConfig = {
     textColor: "text-red-300",
     title: "Hard",
     description: "For the brave ones",
-    points: "30 Points",
   },
 };
 
@@ -238,6 +244,11 @@ export default function DailyQuizPage() {
     );
   };
 
+  const getQuestionTypeCount = (type: "text" | "mcq") => {
+    if (!currentQuiz) return 0;
+    return currentQuiz.questions.filter((q) => q.questionType === type).length;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 flex items-center justify-center">
@@ -319,7 +330,7 @@ export default function DailyQuizPage() {
                 </div>
                 <p className="text-cyan-200/80 text-lg md:text-xl max-w-2xl mx-auto">
                   Choose your difficulty level and test your knowledge with
-                  text-based questions
+                  mixed question types
                 </p>
               </motion.div>
             </div>
@@ -387,7 +398,7 @@ export default function DailyQuizPage() {
                                 {quiz.title}
                               </p>
                               <p className="text-gray-400 text-sm">
-                                {quiz.questions.length} Text Questions
+                                {quiz.questions.length} Questions
                               </p>
                             </div>
 
@@ -404,10 +415,7 @@ export default function DailyQuizPage() {
                                   Completed
                                 </>
                               ) : (
-                                <>
-                                  <Star className="w-4 h-4" />
-                                  {config.points}
-                                </>
+                                <></>
                               )}
                             </div>
                           </>
@@ -619,10 +627,27 @@ export default function DailyQuizPage() {
                           {currentQuestion + 1}
                         </span>
                       </div>
-                      <span className="text-cyan-200 text-sm">
-                        Question {currentQuestion + 1} of{" "}
-                        {currentQuiz.questions.length}
-                      </span>
+                      <div>
+                        <span className="text-cyan-200 text-sm">
+                          Question {currentQuestion + 1} of{" "}
+                          {currentQuiz.questions.length}
+                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              currentQuiz.questions[currentQuestion]
+                                .questionType === "mcq"
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "bg-purple-500/20 text-purple-300"
+                            }`}
+                          >
+                            {currentQuiz.questions[currentQuestion]
+                              .questionType === "mcq"
+                              ? "Multiple Choice"
+                              : "Text Answer"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {isQuestionAnswered(
                       currentQuiz.questions[currentQuestion]._id
@@ -634,57 +659,161 @@ export default function DailyQuizPage() {
                   </h3>
 
                   <div className="mb-6">
-                    <textarea
-                      value={
-                        selectedAnswers[
-                          currentQuiz.questions[currentQuestion]._id
-                        ] || ""
-                      }
-                      onChange={(e) =>
-                        handleAnswer(
-                          currentQuiz.questions[currentQuestion]._id,
-                          e.target.value
-                        )
-                      }
-                      placeholder="Type your answer here..."
-                      className="w-full h-32 px-4 py-3 bg-gray-800/50 border border-cyan-500/30 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300 resize-none"
-                      maxLength={500}
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-gray-400 text-sm flex items-center gap-1">
-                        <Edit3 className="w-4 h-4" />
-                        Write your detailed answer
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        {selectedAnswers[
-                          currentQuiz.questions[currentQuestion]._id
-                        ]?.length || 0}
-                        /500
-                      </span>
-                    </div>
+                    {currentQuiz.questions[currentQuestion].questionType ===
+                    "text" ? (
+                      // Text Question Input
+                      <>
+                        <textarea
+                          value={
+                            selectedAnswers[
+                              currentQuiz.questions[currentQuestion]._id
+                            ] || ""
+                          }
+                          onChange={(e) =>
+                            handleAnswer(
+                              currentQuiz.questions[currentQuestion]._id,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Type your answer here..."
+                          className="w-full h-32 px-4 py-3 bg-gray-800/50 border border-cyan-500/30 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300 resize-none"
+                          maxLength={500}
+                        />
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-gray-400 text-sm flex items-center gap-1">
+                            <Edit3 className="w-4 h-4" />
+                            Write your detailed answer
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            {selectedAnswers[
+                              currentQuiz.questions[currentQuestion]._id
+                            ]?.length || 0}
+                            /500
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      // MCQ Question Options
+                      currentQuiz.questions[currentQuestion].options && (
+                        <div className="space-y-4">
+                          {Object.entries(
+                            currentQuiz.questions[currentQuestion].options!
+                          ).map(([key, value]) => (
+                            <label
+                              key={key}
+                              className={`flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
+                                selectedAnswers[
+                                  currentQuiz.questions[currentQuestion]._id
+                                ] === key
+                                  ? "border-cyan-400 bg-cyan-500/20"
+                                  : "border-gray-600 bg-gray-800/30 hover:border-gray-500 hover:bg-gray-700/30"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name={`question-${currentQuiz.questions[currentQuestion]._id}`}
+                                value={key}
+                                checked={
+                                  selectedAnswers[
+                                    currentQuiz.questions[currentQuestion]._id
+                                  ] === key
+                                }
+                                onChange={(e) =>
+                                  handleAnswer(
+                                    currentQuiz.questions[currentQuestion]._id,
+                                    e.target.value
+                                  )
+                                }
+                                className="sr-only"
+                              />
+                              <div
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-4 ${
+                                  selectedAnswers[
+                                    currentQuiz.questions[currentQuestion]._id
+                                  ] === key
+                                    ? "border-cyan-400 bg-cyan-400"
+                                    : "border-gray-400"
+                                }`}
+                              >
+                                {selectedAnswers[
+                                  currentQuiz.questions[currentQuestion]._id
+                                ] === key && (
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-white font-medium mr-3">
+                                  {key}.
+                                </span>
+                                <span className="text-gray-200">{value}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )
+                    )}
                   </div>
                 </motion.div>
               </AnimatePresence>
 
-              {/* Navigation Controls */}
+              {/* Quiz Statistics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-2xl p-4 text-center">
+                  <BookOpen className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                  <p className="text-blue-300 text-sm">Total Questions</p>
+                  <p className="text-white font-bold text-lg">
+                    {currentQuiz.questions.length}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-4 text-center">
+                  <Target className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                  <p className="text-purple-300 text-sm">MCQ Questions</p>
+                  <p className="text-white font-bold text-lg">
+                    {getQuestionTypeCount("mcq")}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-pink-900/40 to-red-900/40 border border-pink-500/30 rounded-2xl p-4 text-center">
+                  <Edit3 className="w-6 h-6 text-pink-400 mx-auto mb-2" />
+                  <p className="text-pink-300 text-sm">Text Questions</p>
+                  <p className="text-white font-bold text-lg">
+                    {getQuestionTypeCount("text")}
+                  </p>
+                </div>
+                <div className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/30 rounded-2xl p-4 text-center">
+                  <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+                  <p className="text-green-300 text-sm">Answered</p>
+                  <p className="text-white font-bold text-lg">
+                    {
+                      Object.keys(selectedAnswers).filter(
+                        (key) => selectedAnswers[key].trim() !== ""
+                      ).length
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Navigation Buttons */}
               <div className="flex justify-between items-center mb-8">
                 <button
                   onClick={prevQuestion}
                   disabled={currentQuestion === 0}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 ${
                     currentQuestion === 0
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg transform hover:scale-105"
+                      : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white transform hover:scale-105"
                   }`}
                 >
                   <ArrowLeft className="w-5 h-5" />
                   Previous
                 </button>
 
-                <div className="flex items-center gap-4">
-                  <span className="text-cyan-200 text-sm">
-                    {currentQuestion + 1} / {currentQuiz.questions.length}
-                  </span>
+                <div className="text-center">
+                  <p className="text-cyan-200 text-sm mb-1">
+                    Question Progress
+                  </p>
+                  <p className="text-white font-bold">
+                    {currentQuestion + 1} of {currentQuiz.questions.length}
+                  </p>
                 </div>
 
                 <button
@@ -692,10 +821,10 @@ export default function DailyQuizPage() {
                   disabled={
                     currentQuestion === currentQuiz.questions.length - 1
                   }
-                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 ${
                     currentQuestion === currentQuiz.questions.length - 1
                       ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg transform hover:scale-105"
+                      : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white transform hover:scale-105"
                   }`}
                 >
                   Next
@@ -704,62 +833,64 @@ export default function DailyQuizPage() {
               </div>
 
               {/* Submit Button */}
-              <div className="text-center">
-                <motion.button
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <button
                   onClick={handleSubmit}
                   disabled={
+                    Object.keys(selectedAnswers).length !==
+                      currentQuiz.questions.length ||
                     isSubmitting ||
-                    Object.keys(selectedAnswers).filter(
-                      (key) => selectedAnswers[key].trim() !== ""
-                    ).length !== currentQuiz.questions.length
+                    Object.values(selectedAnswers).some(
+                      (answer) => answer.trim() === ""
+                    )
                   }
-                  className={`px-12 py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                    Object.keys(selectedAnswers).filter(
-                      (key) => selectedAnswers[key].trim() !== ""
-                    ).length === currentQuiz.questions.length
-                      ? "bg-gradient-to-r from-green-500 to-cyan-500 hover:from-green-600 hover:to-cyan-600 text-white shadow-2xl transform hover:scale-105 hover:shadow-green-500/20"
+                  className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                    Object.keys(selectedAnswers).length ===
+                      currentQuiz.questions.length &&
+                    Object.values(selectedAnswers).every(
+                      (answer) => answer.trim() !== ""
+                    ) &&
+                    !isSubmitting
+                      ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white transform hover:scale-105 shadow-lg"
                       : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  } ${isSubmitting ? "opacity-50" : ""}`}
-                  whileHover={
-                    Object.keys(selectedAnswers).filter(
-                      (key) => selectedAnswers[key].trim() !== ""
-                    ).length === currentQuiz.questions.length
-                      ? { scale: 1.05 }
-                      : {}
-                  }
-                  whileTap={
-                    Object.keys(selectedAnswers).filter(
-                      (key) => selectedAnswers[key].trim() !== ""
-                    ).length === currentQuiz.questions.length
-                      ? { scale: 0.95 }
-                      : {}
-                  }
+                  }`}
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center gap-2">
+                    <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Submitting...
-                    </div>
+                    </>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <>
                       <Send className="w-5 h-5" />
-                      Submit Quiz (
-                      {
-                        Object.keys(selectedAnswers).filter(
-                          (key) => selectedAnswers[key].trim() !== ""
-                        ).length
-                      }
-                      /{currentQuiz.questions.length})
-                    </div>
+                      Submit Quiz
+                    </>
                   )}
-                </motion.button>
+                </button>
+
                 {Object.keys(selectedAnswers).length !==
                   currentQuiz.questions.length && (
-                  <p className="text-yellow-400 text-sm mt-2">
-                    Please answer all questions to submit the quiz
+                  <p className="text-red-400 text-sm mt-2">
+                    Please answer all questions before submitting
                   </p>
                 )}
-              </div>
+
+                {Object.keys(selectedAnswers).length ===
+                  currentQuiz.questions.length &&
+                  Object.values(selectedAnswers).some(
+                    (answer) => answer.trim() === ""
+                  ) && (
+                    <p className="text-red-400 text-sm mt-2">
+                      Please provide answers to all questions (empty answers not
+                      allowed)
+                    </p>
+                  )}
+              </motion.div>
             </>
           )
         )}
