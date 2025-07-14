@@ -17,6 +17,11 @@ import {
   Link2,
   MessageSquare,
   FileText,
+  Users,
+  Search,
+  X,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -25,6 +30,10 @@ interface Course {
   _id: string;
   title: string;
   students?: number;
+}
+
+interface Student {
+  email: string;
 }
 
 interface FormData {
@@ -40,6 +49,180 @@ interface CustomCalendarProps {
   onDateTimeSelect: (dateTime: string) => void;
   onClose: () => void;
 }
+
+// Multi-Select Student Dropdown Component
+const StudentMultiSelect: React.FC<{
+  students: Student[];
+  selectedEmails: string[];
+  onSelectionChange: (emails: string[]) => void;
+}> = ({ students, selectedEmails, onSelectionChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter students based on search query
+  const filteredStudents = students.filter((student) =>
+    student.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Handle student selection
+  const handleStudentToggle = (email: string) => {
+    if (selectedEmails.includes(email)) {
+      onSelectionChange(selectedEmails.filter((e) => e !== email));
+    } else {
+      onSelectionChange([...selectedEmails, email]);
+    }
+  };
+
+  // Handle select all/none
+  const handleSelectAll = () => {
+    if (selectedEmails.length === students.length) {
+      onSelectionChange([]);
+    } else {
+      onSelectionChange(students.map((s) => s.email));
+    }
+  };
+
+  // Remove selected student
+  const removeStudent = (email: string) => {
+    onSelectionChange(selectedEmails.filter((e) => e !== email));
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Selected Students Display */}
+      {selectedEmails.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {selectedEmails.map((email) => (
+            <motion.span
+              key={email}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="inline-flex items-center gap-1 bg-cyan-500/20 text-cyan-200 px-3 py-1 rounded-full text-sm border border-cyan-500/30"
+            >
+              {email}
+              <button
+                onClick={() => removeStudent(email)}
+                className="ml-1 hover:text-white transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </motion.span>
+          ))}
+        </div>
+      )}
+
+      {/* Dropdown Trigger */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all text-left flex items-center justify-between hover:bg-cyan-900/40"
+      >
+        <span
+          className={
+            selectedEmails.length > 0 ? "text-white" : "text-cyan-300/60"
+          }
+        >
+          {selectedEmails.length > 0
+            ? `${selectedEmails.length} student${
+                selectedEmails.length > 1 ? "s" : ""
+              } selected`
+            : "Select students (optional)"}
+        </span>
+        <ChevronDown
+          className={`w-5 h-5 text-cyan-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {/* Dropdown Content */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            className="absolute top-full left-0 right-0 mt-2 bg-slate-800/95 backdrop-blur-sm border border-cyan-600/50 rounded-2xl shadow-2xl z-50 max-h-80 overflow-hidden"
+          >
+            {/* Search Input */}
+            <div className="p-4 border-b border-cyan-700/30">
+              <div className="relative">
+                <Search className="w-4 h-4 text-cyan-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-lg pl-10 pr-4 py-2 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all placeholder-cyan-300/60"
+                />
+              </div>
+            </div>
+
+            {/* Select All/None */}
+            <div className="p-3 border-b border-cyan-700/30">
+              <button
+                onClick={handleSelectAll}
+                className="w-full text-left px-3 py-2 hover:bg-cyan-700/30 rounded-lg transition-colors flex items-center gap-3 text-cyan-200 hover:text-white"
+              >
+                <div className="w-5 h-5 rounded border border-cyan-500/50 flex items-center justify-center">
+                  {selectedEmails.length === students.length && (
+                    <Check className="w-3 h-3 text-cyan-400" />
+                  )}
+                </div>
+                <span className="text-sm font-medium">
+                  {selectedEmails.length === students.length
+                    ? "Deselect All"
+                    : "Select All"}
+                </span>
+              </button>
+            </div>
+
+            {/* Students List */}
+            <div className="max-h-48 overflow-y-auto">
+              {filteredStudents.length === 0 ? (
+                <div className="p-4 text-center text-cyan-300/60">
+                  {searchQuery ? "No students found" : "No students available"}
+                </div>
+              ) : (
+                filteredStudents.map((student) => (
+                  <motion.button
+                    key={student.email}
+                    onClick={() => handleStudentToggle(student.email)}
+                    className="w-full text-left px-4 py-3 hover:bg-cyan-700/30 transition-colors flex items-center gap-3 text-cyan-200 hover:text-white border-b border-cyan-700/10 last:border-b-0"
+                    whileHover={{ x: 2 }}
+                  >
+                    <div className="w-5 h-5 rounded border border-cyan-500/50 flex items-center justify-center">
+                      {selectedEmails.includes(student.email) && (
+                        <Check className="w-3 h-3 text-cyan-400" />
+                      )}
+                    </div>
+                    <span className="text-sm">{student.email}</span>
+                  </motion.button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Custom Calendar Component
 const CustomCalendar: React.FC<CustomCalendarProps> = ({
@@ -220,7 +403,12 @@ const LiveClassSchedulerPage: React.FC = () => {
     scheduledAt: "",
   });
   const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudentEmails, setSelectedStudentEmails] = useState<string[]>(
+    []
+  );
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingStudents, setLoadingStudents] = useState<boolean>(false);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -255,6 +443,27 @@ const LiveClassSchedulerPage: React.FC = () => {
       }
     };
     fetchCourses();
+  }, [getToken]);
+
+  // Fetch students
+  useEffect(() => {
+    const fetchStudents = async (): Promise<void> => {
+      setLoadingStudents(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE_URL}/api/teacher/students`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setStudents(data.students || []);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        toast.error("Failed to load students");
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+    fetchStudents();
   }, [getToken]);
 
   const handleChange = (
@@ -295,13 +504,18 @@ const LiveClassSchedulerPage: React.FC = () => {
     setLoading(true);
     try {
       const token = await getToken();
+      const payload = {
+        ...form,
+        allowedStudentEmails: selectedStudentEmails, // ✅ Send selected student emails
+      };
+
       const res = await fetch(`${API_BASE_URL}/api/teacher/live-class`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -314,6 +528,7 @@ const LiveClassSchedulerPage: React.FC = () => {
           scheduledAt: "",
         });
         setSelectedCourse(null);
+        setSelectedStudentEmails([]);
       } else {
         toast.error("❌ Failed to schedule class");
       }
@@ -443,6 +658,29 @@ const LiveClassSchedulerPage: React.FC = () => {
                 className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-white focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none placeholder-cyan-300/60"
                 rows={3}
               />
+            </div>
+
+            {/* Student Selection */}
+            <div>
+              <label className="block text-cyan-200 font-medium mb-3">
+                <Users className="w-4 h-4 inline mr-2" />
+                Select Students
+                <span className="text-cyan-400/70 text-sm ml-2">
+                  (Leave empty to allow all students)
+                </span>
+              </label>
+              {loadingStudents ? (
+                <div className="w-full bg-cyan-900/30 border border-cyan-600/50 rounded-xl px-4 py-4 text-cyan-300/60 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin mr-3"></div>
+                  Loading students...
+                </div>
+              ) : (
+                <StudentMultiSelect
+                  students={students}
+                  selectedEmails={selectedStudentEmails}
+                  onSelectionChange={setSelectedStudentEmails}
+                />
+              )}
             </div>
 
             {/* Date & Time */}
