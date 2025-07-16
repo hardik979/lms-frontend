@@ -14,6 +14,7 @@ import {
 interface Answer {
   questionId: string;
   studentAnswer: string;
+  questionText: string;
 }
 
 interface Attempt {
@@ -262,6 +263,10 @@ export default function TeacherQuizResultsPage() {
                                       </span>
                                     </div>
                                     <div className="flex-1">
+                                      <p className="text-cyan-400 font-semibold mb-1">
+                                        {ans.questionText ||
+                                          "Question not found"}
+                                      </p>
                                       <p className="text-white leading-relaxed">
                                         {ans.studentAnswer}
                                       </p>
