@@ -97,19 +97,8 @@ export default function PopupModal() {
             ×
           </button>
 
-          {/* Left Image - Hidden on very small screens, visible on sm+ */}
-          <div className="hidden sm:block w-full md:w-1/2 h-32 sm:h-48 md:h-auto relative flex-shrink-0 overflow-hidden">
-            <Image
-              src="/code.jpg"
-              alt="Internship Promo"
-              fill // ✅ fill the parent container
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-
           {/* Right Form */}
-          <div className="p-4 sm:p-6 md:p-8 w-full md:w-1/2 flex flex-col justify-center relative overflow-y-auto">
+          <div className="p-4 sm:p-6 md:p-8 w-full  flex flex-col justify-center relative overflow-y-auto">
             {/* Header */}
             <div className="mb-4 sm:mb-6">
               <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-cyan-800 leading-tight">
