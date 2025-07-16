@@ -10,6 +10,7 @@ export default function LoadingPage() {
           src="https://lottie.host/6d42cfa9-89ad-4001-a4fb-0822238226f4/UK9Y1BDXTm.lottie"
           loop
           autoplay
+          speed={1.8}
         />
       </div>
 

@@ -18,8 +18,10 @@ import {
   X,
   AlertTriangle,
   Check,
+  Eye,
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import StudentProgressModal from "@/components/StudentProgressModal";
 
 export default function AdminDashboardPage() {
   const { getToken } = useAuth();
@@ -28,6 +30,9 @@ export default function AdminDashboardPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [studentProgress, setStudentProgress] = useState<any | null>(null);
+  const [progressModalOpen, setProgressModalOpen] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
     userId: string;
@@ -115,6 +120,43 @@ export default function AdminDashboardPage() {
 
   const cancelRoleChange = () => {
     setConfirmationModal({ ...confirmationModal, isOpen: false });
+  };
+
+  const handleViewProgress = async (userId: string) => {
+    const token = await getToken();
+    setLoadingProgress(true);
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/admin/student/${userId}/progress`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setStudentProgress(data);
+        setProgressModalOpen(true);
+      } else {
+        console.error("Failed to fetch student progress");
+      }
+    } catch (err) {
+      console.error("Error fetching student progress:", err);
+    } finally {
+      setLoadingProgress(false);
+    }
+  };
+
+  const closeProgressModal = () => {
+    setProgressModalOpen(false);
+    setStudentProgress(null);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (loading) {
@@ -347,33 +389,60 @@ export default function AdminDashboardPage() {
                           </span>
                         </td>
                         <td className="px-8 py-6">
-                          <div className="relative">
-                            <select
-                              value={user.role}
-                              disabled={updatingUserId === user._id}
-                              onChange={(e) =>
-                                handleRoleChangeRequest(
-                                  user._id,
-                                  e.target.value
-                                )
-                              }
-                              className="appearance-none bg-gradient-to-r from-cyan-900/60 to-blue-900/60 border border-cyan-700/60 text-cyan-200 rounded-xl px-6 py-3 pr-12 focus:outline-none focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg backdrop-blur-sm"
-                            >
-                              <option value="student">Student</option>
-                              <option value="teacher">Teacher</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
-                            {updatingUserId === user._id && (
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{
-                                  duration: 1,
-                                  repeat: Infinity,
-                                  ease: "linear",
-                                }}
-                                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full"
-                              />
+                          <div className="flex items-center space-x-4">
+                            <div className="relative">
+                              <select
+                                value={user.role}
+                                disabled={updatingUserId === user._id}
+                                onChange={(e) =>
+                                  handleRoleChangeRequest(
+                                    user._id,
+                                    e.target.value
+                                  )
+                                }
+                                className="appearance-none bg-gradient-to-r from-cyan-900/60 to-blue-900/60 border border-cyan-700/60 text-cyan-200 rounded-xl px-6 py-3 pr-12 focus:outline-none focus:ring-4 focus:ring-cyan-400/50 focus:border-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-medium shadow-lg backdrop-blur-sm"
+                              >
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                              {updatingUserId === user._id && (
+                                <motion.div
+                                  animate={{ rotate: 360 }}
+                                  transition={{
+                                    duration: 1,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                  }}
+                                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full"
+                                />
+                              )}
+                            </div>
+
+                            {user.role === "student" && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleViewProgress(user._id)}
+                                disabled={loadingProgress}
+                                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl font-medium transition-all flex items-center space-x-2 shadow-lg disabled:opacity-50"
+                              >
+                                {loadingProgress ? (
+                                  <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{
+                                      duration: 1,
+                                      repeat: Infinity,
+                                      ease: "linear",
+                                    }}
+                                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                                  />
+                                ) : (
+                                  <Eye className="w-4 h-4" />
+                                )}
+                                <span>View Progress</span>
+                              </motion.button>
                             )}
                           </div>
                         </td>
@@ -472,6 +541,14 @@ export default function AdminDashboardPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Student Progress Modal */}
+      <StudentProgressModal
+        isOpen={progressModalOpen}
+        onClose={closeProgressModal}
+        studentProgress={studentProgress}
+        formatTime={formatTime}
+      />
 
       {/* Confirmation Modal */}
       <AnimatePresence>

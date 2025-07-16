@@ -4,17 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import LoadingPage from "@/components/Loader";
-import {
-  BookOpen,
-  Lock,
-  Play,
-  Clock,
-  Users,
-  Award,
-  Star,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { BookOpen, Lock, Play, Clock, Star, ChevronRight } from "lucide-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useSelectedCourseStore } from "@/store/useCourseStore";

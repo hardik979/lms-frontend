@@ -188,6 +188,10 @@ export default function UploadDailyQuizPage() {
         onChange={(e) => setDifficultyLevel(e.target.value)}
         className="w-full p-2 rounded bg-slate-800 border border-slate-600 mb-4"
       >
+        <option value="SQL">SQL</option>
+        <option value="linux">Linux</option>
+        <option value="ITIL">ITIL</option>
+        <option value="Tools">Tools (Monitoring & Ticketing) </option>
         <option value="easy">Easy</option>
         <option value="medium">Medium</option>
         <option value="hard">Hard</option>

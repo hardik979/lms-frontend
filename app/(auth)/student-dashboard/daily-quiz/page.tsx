@@ -16,6 +16,9 @@ import {
   Target,
   Send,
   Edit3,
+  Database,
+  MonitorCog,
+  Wrench,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -44,14 +47,61 @@ interface QuizData {
 }
 
 interface DifficultyQuizzes {
+  SQL: QuizData | null;
+  Linux: QuizData | null;
+  ITIL: QuizData | null;
+  Tools: QuizData | null;
   easy: QuizData | null;
   medium: QuizData | null;
   hard: QuizData | null;
 }
 
-type Difficulty = "easy" | "medium" | "hard";
+type Difficulty =
+  | "SQL"
+  | "Linux"
+  | "ITIL"
+  | "Tools"
+  | "easy"
+  | "medium"
+  | "hard";
 
 const difficultyConfig = {
+  SQL: {
+    icon: Database,
+    color: "from-emerald-400 to-lime-500",
+    bgColor: "from-emerald-900/40 to-lime-900/40",
+    borderColor: "border-lime-400/30",
+    textColor: "text-lime-300",
+    title: "SQL",
+    description: "Questions related to SQL",
+  },
+  Linux: {
+    icon: MonitorCog,
+    color: "from-indigo-400 to-blue-500",
+    bgColor: "from-indigo-900/40 to-blue-900/40",
+    borderColor: "border-blue-400/30",
+    textColor: "text-blue-300",
+    title: "Linux",
+    description: "Questions related to Linux",
+  },
+  ITIL: {
+    icon: TrendingUp,
+    color: "from-cyan-400 to-sky-500",
+    bgColor: "from-cyan-900/40 to-sky-900/40",
+    borderColor: "border-cyan-400/30",
+    textColor: "text-sky-300",
+    title: "ITIL",
+    description: "Questions related to ITIL",
+  },
+  Tools: {
+    icon: Wrench,
+    color: "from-purple-500 to-violet-500",
+    bgColor: "from-purple-900/40 to-violet-900/40",
+    borderColor: "border-purple-500/30",
+    textColor: "text-violet-300",
+    title: "Tools",
+    description: "Questions related to Monitoring & Ticketing Tools",
+  },
   easy: {
     icon: Shield,
     color: "from-green-500 to-emerald-500",
@@ -84,6 +134,10 @@ const difficultyConfig = {
 export default function DailyQuizPage() {
   const { getToken } = useAuth();
   const [quizzes, setQuizzes] = useState<DifficultyQuizzes>({
+    SQL: null,
+    Linux: null,
+    ITIL: null,
+    Tools: null,
     easy: null,
     medium: null,
     hard: null,
