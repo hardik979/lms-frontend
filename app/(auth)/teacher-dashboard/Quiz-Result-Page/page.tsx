@@ -15,6 +15,8 @@ interface Answer {
   questionId: string;
   studentAnswer: string;
   questionText: string;
+  questionType?: string;
+  options?: Record<string, string>;
 }
 
 interface Attempt {
@@ -267,9 +269,33 @@ export default function TeacherQuizResultsPage() {
                                         {ans.questionText ||
                                           "Question not found"}
                                       </p>
-                                      <p className="text-white leading-relaxed">
-                                        {ans.studentAnswer}
-                                      </p>
+                                      {/* Student answer and options (if MCQ) */}
+                                      <div className="text-white space-y-2">
+                                        {ans.questionType === "mcq" &&
+                                        ans.options ? (
+                                          <div className="space-y-1">
+                                            {Object.entries(ans.options).map(
+                                              ([key, value]) => (
+                                                <div
+                                                  key={key}
+                                                  className={`px-3 py-2 rounded-md border ${
+                                                    key === ans.studentAnswer
+                                                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-300"
+                                                      : "border-slate-600 bg-slate-800/50 text-slate-300"
+                                                  }`}
+                                                >
+                                                  <span className="font-semibold mr-2">
+                                                    {key}.
+                                                  </span>
+                                                  {value}
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <p>{ans.studentAnswer}</p>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
