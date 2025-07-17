@@ -4,7 +4,7 @@ import "./globals.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ClerkProvider } from "@clerk/nextjs";
-
+import { Analytics } from "@vercel/analytics/next";
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 const righteous = Righteous({
@@ -28,7 +28,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${montserrat.className} ${righteous.variable}`}>
           {children}
-
+          <Analytics />
           <ToastContainer />
         </body>
       </html>
