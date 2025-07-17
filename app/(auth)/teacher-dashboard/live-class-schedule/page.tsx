@@ -24,6 +24,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Type definitions
 interface Course {
@@ -504,9 +510,14 @@ const LiveClassSchedulerPage: React.FC = () => {
     setLoading(true);
     try {
       const token = await getToken();
+      const istScheduledAt = dayjs(form.scheduledAt)
+        .tz("Asia/Kolkata")
+        .toISOString();
+
       const payload = {
         ...form,
-        allowedStudentEmails: selectedStudentEmails, // ✅ Send selected student emails
+        scheduledAt: istScheduledAt,
+        allowedStudentEmails: selectedStudentEmails,
       };
 
       const res = await fetch(`${API_BASE_URL}/api/teacher/live-class`, {
@@ -542,20 +553,8 @@ const LiveClassSchedulerPage: React.FC = () => {
 
   const formatDisplayDateTime = (dateTimeStr: string): string => {
     if (!dateTimeStr) return "";
-    const date = new Date(dateTimeStr);
-    return (
-      date.toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }) +
-      " at " +
-      date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    );
+    const date = dayjs(dateTimeStr).tz("Asia/Kolkata");
+    return `${date.format("dddd, MMMM D YYYY")} at ${date.format("hh:mm A")}`;
   };
 
   const containerVariants = {

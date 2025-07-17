@@ -4,7 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useSelectedCourseStore } from "@/store/useCourseStore";
 import { API_BASE_URL } from "@/lib/api";
 import { CalendarDays, Clock, Video, AlertCircle, Users } from "lucide-react";
-import moment from "moment";
+import moment from "moment-timezone";
 
 interface LiveClass {
   _id: string;
@@ -160,7 +160,9 @@ export default function LiveClassesSection() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-cyan-300 text-sm">
                 <CalendarDays className="w-4 h-4" />
-                {moment(cls.scheduledAt).format("MMMM Do YYYY, h:mm A")}
+                {moment(cls.scheduledAt)
+                  .tz("Asia/Kolkata")
+                  .format("MMMM Do YYYY, h:mm A")}
               </div>
               {getStatusBadge(status)}
             </div>
@@ -197,7 +199,7 @@ export default function LiveClassesSection() {
               {/* Time remaining for upcoming classes */}
               {isUpcoming && (
                 <div className="text-cyan-500 text-xs">
-                  {moment(cls.scheduledAt).format("h:mm A")}
+                  {moment(cls.scheduledAt).tz("Asia/Kolkata").format("h:mm A")}
                 </div>
               )}
             </div>
