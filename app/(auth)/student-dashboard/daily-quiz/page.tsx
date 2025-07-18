@@ -155,7 +155,26 @@ export default function DailyQuizPage() {
   const [showNameForm, setShowNameForm] = useState(false);
   const [studentName, setStudentName] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  useEffect(() => {
+    const disableCopyCutContext = (e: Event) => e.preventDefault();
 
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.warn("Please don't paste. You should answer it by yourself.");
+    };
+
+    document.addEventListener("contextmenu", disableCopyCutContext);
+    document.addEventListener("copy", disableCopyCutContext);
+    document.addEventListener("cut", disableCopyCutContext);
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      document.removeEventListener("contextmenu", disableCopyCutContext);
+      document.removeEventListener("copy", disableCopyCutContext);
+      document.removeEventListener("cut", disableCopyCutContext);
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, []);
   useEffect(() => {
     const fetchQuizzes = async () => {
       setIsLoading(true);
@@ -708,7 +727,7 @@ export default function DailyQuizPage() {
                     ) && <CheckCircle className="w-6 h-6 text-green-400" />}
                   </div>
 
-                  <h3 className="text-2xl md:text-3xl font-semibold text-white mb-8 leading-relaxed">
+                  <h3 className="text-2xl no-copy md:text-3xl font-semibold text-white mb-8 leading-relaxed">
                     {currentQuiz.questions[currentQuestion].question}
                   </h3>
 

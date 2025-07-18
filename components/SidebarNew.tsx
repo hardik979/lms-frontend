@@ -14,6 +14,7 @@ import {
   IconChalkboardTeacher,
   IconX,
   IconChevronDown,
+  IconQuestionMark,
 } from "@tabler/icons-react";
 import { Projector } from "lucide-react";
 import { useActiveCourseId } from "@/lib/hooks/useDefaultCourse";

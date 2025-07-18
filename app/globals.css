@@ -39,6 +39,12 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+.no-copy {
+  user-select: none;
+  -webkit-user-select: none; /* Chrome/Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

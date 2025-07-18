@@ -183,7 +183,7 @@ export default function DashNav({
                 />
               </div>
 
-              <span className="text-sm font-bold [font-family:var(--font-righteous)] ">
+              <span className="text-md font-bold [font-family:var(--font-roboto)] ">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
                   IT
                 </span>{" "}
@@ -218,11 +218,8 @@ export default function DashNav({
                 />
               </div>
 
-              <span className="text-xl font-bold text-cyan-400 [font-family:var(--font-righteous)]">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-                  IT
-                </span>{" "}
-                Jobs Factory
+              <span className="text-3xl font-bold text-cyan-400 [font-family:var(--font-roboto)]">
+                <span className=" text-yellow-500">IT</span> Jobs Factory
               </span>
             </Link>
           </div>
