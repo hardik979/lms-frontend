@@ -126,8 +126,8 @@ const difficultyConfig = {
     bgColor: "from-red-900/40 to-pink-900/40",
     borderColor: "border-red-500/30",
     textColor: "text-red-300",
-    title: "Hard",
-    description: "For the brave ones",
+    title: "IJF-MAT : IT Jobs Factory Mastery & Aptitude Test",
+    description: "The timing of this test is 2 hours",
   },
 };
 
